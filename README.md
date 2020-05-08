@@ -6,6 +6,39 @@ A simple command line (CLI) tool to check network connectivity.
 
 **Netiscope** is open source and can be extended with more checks.
 
+## Quick Start Guide
+
+In order to compile, you need to install [Golang](https://golang.org/). Then, to get the source for Netiscope:
+
+```
+mkdir -p ~/go/src/
+cd ~/go/src/
+git clone https://github.com/robert-kisteleki/netiscope.git
+```
+
+There are a few Go packages that are required to compile:
+
+```
+go get github.com/miekg/dns
+go get github.com/fatih/color
+go get github.com/sparrc/go-ping
+go get gopkg.in/ini.v1
+```
+
+Now you're ready to compile and run:
+
+```
+go build netiscope
+./netiscope -c netiscope.ini
+```
+
+On Linux, the ping functionality may need '"unprivileged" ping via UDP" permission:
+
+```
+sudo sysctl -w net.ipv4.ping_group_range="0   2147483647"
+```
+
+
 ## Checks
 
 **Netiscope** executes a series of _checks_, each tailored to discover if a particular networking function is working properly or not.
@@ -43,6 +76,7 @@ The checks could also include:
   * (TODO, possible) Check ability to spoof packets / BCP38 compliance
   * (TODO, possible) User define check: favourite VPN, personal webserver, ... using ping/HTTPS/etc
 
+
 ## Configuration
 
 See `netiscope.ini` for details. This configuration is loaded on start. It can be loaded from `~/.config/netiscope.ini` or explicitly specified via the `-c` parameter.
@@ -55,24 +89,24 @@ Notable command line options:
   * `-v` is a shorthand to increase logging to _detail_ level
   * `-color` enables (ANSI) output colors
 
- The _configuration file_ has several sections:
-   * The `main` section has basic options, many which can also be set on the command line:
-     * `loglevel`
-     * `color`
-     * `skip_ipv4` and `skip_ipv6`
-     * `ping_packets`
+The _configuration file_ has several sections:
+  * The `main` section has basic options, many which can also be set on the command line:
+    * `loglevel`
+    * `color`
+    * `skip_ipv4` and `skip_ipv6`
+    * `ping_packets`
   * The `checks` section lists the checks to execute
-     * Each _check_ has (or can have) its own section defining options for the particular check
-   * The `cidrs` section contains the list of CIDR blocks for (some) providers. This allows checking
-     if the IP address used (or looked up) for that provider is in this "known good" list
-   * See the sections and comments in the supplied config file for more details, examples and default settings
+    * Each _check_ has (or can have) its own section defining options for the particular check
+  * The `cidrs` section contains the list of CIDR blocks for (some) providers. This allows checking
+    if the IP address used (or looked up) for that provider is in this "known good" list
+  * See the sections and comments in the supplied config file for more details, examples and default settings
+
 
 ## Author
 
 Robert Kisteleki (kistel@gmail.com)
 
+
 ## License and Feedback
 
 The code is open sourced under GPLv3 license. It is available at [https://github.com/robert-kisteleki/netiscope/](https://github.com/robert-kisteleki/netiscope/).
-
-There's also a Twitter account: [@netiscope](https://twitter.com/netiscope)
