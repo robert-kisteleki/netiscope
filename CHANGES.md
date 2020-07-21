@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+xxx
+  * added a "Quick Start" section to docs
 
 0.0.1.20200505
   * initial release
