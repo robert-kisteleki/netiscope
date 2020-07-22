@@ -51,11 +51,11 @@ Check if any routable addresses are present. Current unicast IPv4 and IPv6 addre
 
 ### 2. Local DNS resolvers
 
-Check if DNS resolvers are defined, reachable and if they work properly. Each resolver defined in resolv.conf is pinged and a series of DNS lookups (for well known targets such as google.com) are executed agains them. The results are matched against a known-good list of potential responses.
+Check if DNS resolvers are defined, reachable and if they work properly. Each resolver defined in resolv.conf is pinged and a series of DNS lookups (for well known targets such as google.com) are executed against them. The results are matched against a known-good list of potential responses.
 
 ### 3. Open DNS resolvers
 
-Check if well-known open DNS resolvers are reachable. "Well-known" includes 1.1.1. (Cloudflare), 8.8.8.8 (Google) and 9.9.9.9 (Quad9). They are currently only pinged.
+Check if well-known open DNS resolvers are reachable. "Well-known" includes 1.1.1.1 (Cloudflare), 8.8.8.8 (Google) and 9.9.9.9 (Quad9). They are currently only pinged.
 
 TODO: implement proper checks
 
@@ -74,15 +74,17 @@ The checks could also include:
     * whether protocols such as QUIC can be used
   * (TODO, possible) IPv6 PMTUD to various targets
   * (TODO, possible) Check ability to spoof packets / BCP38 compliance
-  * (TODO, possible) User define check: favourite VPN, personal webserver, ... using ping/HTTPS/etc
+  * (TODO, possible) User defined check: favourite VPN, personal webserver, ... using ping/HTTPS/etc
 
 
 ## Configuration
 
-See `netiscope.ini` for details. This configuration is loaded on start. It can be loaded from `~/.config/netiscope.ini` or explicitly specified via the `-c` parameter.
+See `netiscope.ini` for details. This configuration is loaded on start. It can be explicitly
+specified via the `-c` parameter, from `./netiscope.ini`, or from `~/.config/netiscope.ini`.
 
 Notable command line options:
   * `-c CONFIG` specifies a config file
+  * `-C CIDRFILE` specifies a provider CIDR list file
   * `-s SECTION` specifies a configuration section list sthe checks to execute instead of `checks`
   * `-skip4` and `-skip6` disable IPV4/IPv6 checks, respectively
   * `-l LEVEL` sets the log level. LEVEL can be _detail_, _info_ (default), _warning_ or _error_
@@ -97,8 +99,9 @@ The _configuration file_ has several sections:
     * `ping_packets`
   * The `checks` section lists the checks to execute
     * Each _check_ has (or can have) its own section defining options for the particular check
-  * The `cidrs` section contains the list of CIDR blocks for (some) providers. This allows checking
-    if the IP address used (or looked up) for that provider is in this "known good" list
+  * The `CIDRFILE` contains the list of CIDR blocks for (some) providers. This allows checking
+    if the IP address used (or looked up) for that provider is in this "known good" list. This
+    file is looked up using the `-C` option, or where the main config file is.
   * See the sections and comments in the supplied config file for more details, examples and default settings
 
 

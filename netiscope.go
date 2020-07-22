@@ -12,6 +12,7 @@ const (
 func main() {
 	util.SetupFlags()
 	util.ReadConfig()
+	util.ReadCIDRConfig()
 	reportNonStandardConfig()
 	start()
 	checks.ExecuteChecks()

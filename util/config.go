@@ -9,11 +9,14 @@ import (
 	"gopkg.in/ini.v1" //    https://github.com/go-ini/ini
 )
 
-const defaultConfig = ".config/netiscope.ini"
+var defaultConfig = os.Getenv("HOME") + "/.config/netiscope.ini"
+var defaultCIDRConfig = os.Getenv("HOME") + "/.config/netiscope-cidr.ini"
 
 var cfg *ini.File
+var cidrCfg *ini.File
 var (
 	flagConfig   string
+	flagCIDR     string
 	flagSection  string
 	flagSkipIPv4 bool
 	flagSkipIPv6 bool
@@ -29,6 +32,7 @@ func SetupFlags() {
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&flagConfig, "c", "", "Use this config file")
+	flag.StringVar(&flagCIDR, "C", "", "Use this CIDR file")
 	flag.StringVar(&flagSection, "s", "checks", "Which section lists the checks to execute. Default is 'checks'.")
 	flag.BoolVar(&flagSkipIPv4, "skip4", false, "Skip IPv4 checks")
 	flag.BoolVar(&flagSkipIPv6, "skip6", false, "Skip IPv6 checks")
@@ -44,29 +48,69 @@ func SetupFlags() {
 	}
 }
 
-// ReadConfig deals wih configuration file loading
+// ReadConfig deals with main configuration file loading
 func ReadConfig() {
+	confFile := whichFile(
+		[]string{flagConfig, "netiscope.ini", defaultConfig},
+	)
 	// config as argument is tried first
-	if flagConfig != "" {
-		err := tryConfig(flagConfig)
-		if err != nil {
-			Log("main", LevelFatal, "CONFIG_FLAG", fmt.Sprintf("Failed to read config file: %v", err))
-			os.Exit(1)
-		}
-		Log("main", LevelDetail, "CONFIG_FLAG", "Reading config file "+flagConfig)
-	} else {
-		home := os.Getenv("HOME")
-		configFile := home + "/" + defaultConfig
-		err := tryConfig(configFile)
-		if err != nil {
-			Log("main", LevelFatal, "CONFIG_FLAG", fmt.Sprintf("Failed to read config file: %v", err))
-			os.Exit(1)
-		}
-		Log("main", LevelDetail, "CONFIG_DEFAULT", "Reading config file "+configFile)
+	if confFile == "" {
+		Log("main", LevelFatal, "CONFIG_FLAG", "Failed to find main config file")
+		os.Exit(1)
 	}
 
+	var err error
+	cfg, err = ini.LoadSources(
+		ini.LoadOptions{AllowBooleanKeys: true, AllowShadows: true},
+		confFile,
+	)
+	if err != nil {
+		Log("main", LevelFatal, "CONFIG_FLAG", fmt.Sprintf("Failed to read main config file: %v", err))
+		os.Exit(1)
+	}
+	Log("main", LevelDetail, "CONFIG_FLAG", "Reading config file "+confFile)
+
 	setLogLevel(cfg.Section("main").Key("loglevel").MustString(""))
+}
+
+// ReadCIDRConfig deals with CIDR list loading
+func ReadCIDRConfig() {
+	confFile := whichFile(
+		[]string{flagCIDR, "cidr.ini", defaultCIDRConfig},
+	)
+	// config as argument is tried first
+	if confFile == "" {
+		Log("main", LevelWarning, "CONFIG_FLAG", "Failed to find CIDR config file")
+		return
+	}
+
+	var err error
+	cidrCfg, err = ini.LoadSources(
+		ini.LoadOptions{AllowBooleanKeys: true, AllowShadows: true},
+		confFile,
+	)
+	if err != nil {
+		Log("main", LevelWarning, "CONFIG_FLAG", fmt.Sprintf("Failed to read CIDR config file: %v", err))
+		return
+	}
+	Log("main", LevelDetail, "CONFIG_FLAG", "Reading CIDR config file "+confFile)
+
 	loadProviderCIDRBlocks()
+}
+
+// check which file exists, from a list of candidates in order of preference
+func whichFile(candidates []string) string {
+	for _, file := range candidates {
+		if file == "" {
+			continue
+		}
+		_, err := os.Stat(file)
+		if err != nil {
+			continue
+		}
+		return file
+	}
+	return ""
 }
 
 func setLogLevel(level string) {
@@ -80,15 +124,6 @@ func setLogLevel(level string) {
 	case "error":
 		LogLevel = LevelError
 	}
-}
-
-func tryConfig(confFile string) error {
-	var err error
-	cfg, err = ini.LoadSources(
-		ini.LoadOptions{AllowBooleanKeys: true, AllowShadows: true},
-		confFile,
-	)
-	return err
 }
 
 // GetChecks loads the list of checks to be run from the ini file
@@ -128,10 +163,10 @@ func GetDNSNamesToLookup() []string {
 
 // load known CIDR prefixes for some providers
 func loadProviderCIDRBlocks() {
-	keys := cfg.Section("cidrs").KeyStrings()
+	keys := cidrCfg.Section("cidrs").KeyStrings()
 	for _, key := range keys {
 		cidrProviders[key] = make([]net.IPNet, 0)
-		cidrs := cfg.Section("cidrs").Key(key).ValueWithShadows()
+		cidrs := cidrCfg.Section("cidrs").Key(key).ValueWithShadows()
 		for _, cidr := range cidrs {
 			cidrProviders[key] = append(cidrProviders[key], makeIPNet(cidr))
 		}
