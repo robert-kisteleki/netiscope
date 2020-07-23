@@ -51,13 +51,16 @@ Check if any routable addresses are present. Current unicast IPv4 and IPv6 addre
 
 ### 2. Local DNS resolvers
 
-Check if DNS resolvers are defined, reachable and if they work properly. Each resolver defined in resolv.conf is pinged and a series of DNS lookups (for well known targets such as google.com) are executed against them. The results are matched against a known-good list of potential responses.
+Check if DNS resolvers are defined, reachable and if they work properly. Each resolver defined in resolv.conf is pinged and a series of DNS lookups (for well known targets such as google.com) are executed against them. The results are matched against a known-good list of potential responses (see CIDR list).
 
 ### 3. Open DNS resolvers
 
-Check if well-known open DNS resolvers are reachable. "Well-known" includes 1.1.1.1 (Cloudflare), 8.8.8.8 (Google) and 9.9.9.9 (Quad9). They are currently only pinged.
+Check if well-known open DNS resolvers are reachable. "Well-known" includes:
+  * 1.1.1.1 (Cloudflare)
+  * 8.8.8.8 (Google)
+  * 9.9.9.9 (Quad9)
 
-TODO: implement proper checks
+Like with the local DNS resolvers, each one is pinged and a series of DNS lookups (for well known targets such as google.com) are executed against them. The results are matched against a known-good list of potential responses (see CIDR list).
 
 ### X. Future checks
 

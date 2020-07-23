@@ -9,6 +9,7 @@ var (
 	knownChecks = map[string]checkFunction{
 		"network_interfaces":  CheckNetworkInterfaces,
 		"dns_local_resolvers": CheckDNSResolvers,
+		"dns_open_resolvers":  CheckOpenResolvers,
 		"1111":                CheckCloudflareDNS,
 		"8888":                CheckGoogleDNS,
 		"9999":                CheckQuad9DNS,
