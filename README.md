@@ -28,8 +28,9 @@ go get gopkg.in/ini.v1
 Now you're ready to compile and run:
 
 ```
+cd ~/go/src/netiscope/
 go build netiscope
-./netiscope -c netiscope.ini
+./netiscope -v -color
 ```
 
 On Linux, the ping functionality may need '"unprivileged" ping via UDP" permission:
