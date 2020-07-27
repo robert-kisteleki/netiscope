@@ -17,14 +17,12 @@ var (
 	rcSearch      []string
 )
 
-// CheckDNSResolvers ...
+// CheckDNSResolvers reads the local DNS reolver configuration and tests the servers listed therein
 func CheckDNSResolvers() {
-
 	if !loadResolvers() {
 		util.Log(checkName, util.LevelError, "NO_RESOLV_CONF", "Could not load DNS resolver data from resolv.conf")
 		return
 	}
-
 	testLocalResolvers()
 }
 
@@ -69,10 +67,10 @@ func loadResolvers() bool {
 
 	util.Log(checkName, util.LevelInfo, "DOMAIN", fmt.Sprintf("Current domain is: %s", rcDomain))
 	if !util.SkipIPv4() {
-		util.Log(checkName, util.LevelInfo, "RESOLVERS", fmt.Sprintf("IPv4 resolvers: %s", rcResolversV4))
+		util.Log(checkName, util.LevelInfo, "LOCAL_RESOLVERS", fmt.Sprintf("IPv4 resolvers: %s", rcResolversV4))
 	}
 	if !util.SkipIPv6() {
-		util.Log(checkName, util.LevelInfo, "RESOLVERS", fmt.Sprintf("IPv6 resolvers: %s", rcResolversV6))
+		util.Log(checkName, util.LevelInfo, "LOCAL_RESOLVERS", fmt.Sprintf("IPv6 resolvers: %s", rcResolversV6))
 	}
 	util.Log(checkName, util.LevelInfo, "SEARCH", fmt.Sprintf("Search path: %s", rcSearch))
 
@@ -80,47 +78,19 @@ func loadResolvers() bool {
 }
 
 func testLocalResolvers() {
-	var pingV4, pingV6 multipleResult
-	var queryV4, queryV6 multipleResult
-
-	if len(rcResolversV4) == 0 && len(rcResolversV6) == 0 {
-		util.Log(checkName, util.LevelError, "NO_RESOLVERS", "No resolvers defined in resolv.conf")
-		return
-	}
-
-	// ping them
-	if util.GetConfigBoolParam("dns_resolvers", "ping", false) {
-
-		if !util.SkipIPv4() {
-			pingV4 = pingResolvers(rcResolversV4)
-		}
-		if !util.SkipIPv6() {
-			pingV6 = pingResolvers(rcResolversV6)
-		}
-
-		if len(rcResolversV4)+len(rcResolversV6) > 0 &&
-			pingV4[resultSuccess]+pingV6[resultSuccess] == 0 {
-			// all resolvers are unreachable
-			util.Log(checkName, util.LevelWarning, "ALL_PING_FAIL", "All local DNS resolvers are unreachable")
-			return
+	if !util.SkipIPv4() {
+		if len(rcResolversV4) > 0 {
+			testResolversOnAddressFamily("local", "IPv4", rcResolversV4)
+		} else {
+			util.Log(checkName, util.LevelError, "NO_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
 		}
 	}
 
-	// query them
-	if util.GetConfigBoolParam("dns_resolvers", "query", false) {
-		if !util.SkipIPv4() {
-			queryV4 = queryResolvers(rcResolversV4)
-		}
-		if !util.SkipIPv6() {
-			queryV6 = queryResolvers(rcResolversV6)
-		}
-
-		// draw conclusion
-		if len(rcResolversV4)+len(rcResolversV6) > 0 &&
-			queryV4[resultSuccess]+queryV6[resultSuccess] == 0 {
-			// no resolvers gave answers
-			util.Log(checkName, util.LevelError, "ALL_QUERY_FAIL", "No local DNS resolvers are answering queries")
-			return
+	if !util.SkipIPv6() {
+		if len(rcResolversV6) > 0 {
+			testResolversOnAddressFamily("local", "IPv6", rcResolversV6)
+		} else {
+			util.Log(checkName, util.LevelError, "NO_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
 		}
 	}
 }

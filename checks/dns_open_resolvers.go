@@ -55,59 +55,17 @@ func CheckQuad9DNS() {
 	)
 }
 
-func checkOpenResolver(
-	provider string,
-	af string,
-	addresses []string) {
-
-	var results multipleResult
-
-	// ping them
-	if util.GetConfigBoolParam("dns_resolvers", "ping", false) {
-
-		if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
-			results = pingResolvers(addresses)
-			if results[resultFailure] > 0 {
-				util.Log(
-					checkName,
-					util.LevelWarning,
-					"ALL_PING_FAIL",
-					fmt.Sprintf(
-						"%s resolvers for %s are unreachable",
-						af, provider,
-					),
-				)
-			}
-		}
-	}
-
-	// query them
-	if util.GetConfigBoolParam("dns_resolvers", "query", false) {
-		if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
-			results = queryResolvers(addresses)
-
-			if results[resultFailure] > 0 {
-				util.Log(
-					checkName,
-					util.LevelWarning,
-					"SOME_QUERY_FAIL",
-					fmt.Sprintf(
-						"%s resolvers for %s are not always answering queries",
-						af, provider,
-					),
-				)
-			}
-			if results[resultSuccess] == 0 {
-				util.Log(
-					checkName,
-					util.LevelError,
-					"ALL_QUERY_FAIL",
-					fmt.Sprintf(
-						"%s resolvers for %s are not answering queries",
-						af, provider,
-					),
-				)
-			}
-		}
+func checkOpenResolver(provider string, af string, resolvers []string) {
+	if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
+		util.Log(
+			checkName,
+			util.LevelInfo,
+			"CKECKING_OPEN_DNS_RESOLVER",
+			fmt.Sprintf(
+				"Checking %s's %s resolvers %v",
+				provider, af, resolvers,
+			),
+		)
+		testResolversOnAddressFamily("open", "IPv4", resolvers)
 	}
 }

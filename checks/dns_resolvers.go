@@ -2,6 +2,7 @@ package checks
 
 import (
 	"fmt"
+	"strings"
 
 	"netiscope/measurements"
 	"netiscope/util"
@@ -17,12 +18,12 @@ const (
 
 // ping resolvers
 // return tuple of [#success, #partial, #fail]
-func pingResolvers(resolvers []string) (results multipleResult) {
+func pingResolvers(rtype string, resolvers []string) (results multipleResult) {
 	for _, resolver := range resolvers {
 		util.Log(
 			checkName,
 			util.LevelInfo,
-			"PING_RESOLVER",
+			fmt.Sprintf("PING_%s_RESOLVER", strings.ToUpper(rtype)),
 			fmt.Sprintf("Pinging resolver %s", resolver),
 		)
 		loss := measurements.Ping(checkName, resolver)
@@ -49,7 +50,7 @@ func pingResolvers(resolvers []string) (results multipleResult) {
 				checkName,
 				util.LevelWarning,
 				"PING_WARNING",
-				fmt.Sprintf("Resolver %s is partially reachable", resolver),
+				fmt.Sprintf("Resolver %s shows packet loss", resolver),
 			)
 		}
 	}
@@ -59,7 +60,7 @@ func pingResolvers(resolvers []string) (results multipleResult) {
 
 // query some names from the resolvers
 // return tuple of [#success, #partial, #fail]
-func queryResolvers(resolvers []string) (results multipleResult) {
+func queryResolvers(rtype string, resolvers []string) (results multipleResult) {
 	for _, resolver := range resolvers {
 		names := util.GetDNSNamesToLookup()
 		var nsuccess, nfail int
@@ -76,7 +77,7 @@ func queryResolvers(resolvers []string) (results multipleResult) {
 			util.Log(
 				checkName,
 				util.LevelError,
-				"RESOLVER_FAILS",
+				fmt.Sprintf("%s_RESOLVER_FAILS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s is not answering queries", resolver),
 			)
 		case nsuccess > 0 && nfail > 0:
@@ -84,16 +85,16 @@ func queryResolvers(resolvers []string) (results multipleResult) {
 			util.Log(
 				checkName,
 				util.LevelWarning,
-				"RESOLVER_FLAKY",
-				fmt.Sprintf("Resolver %s is only answering some queries", resolver),
+				fmt.Sprintf("%s_RESOLVER_FLAKY", strings.ToUpper(rtype)),
+				fmt.Sprintf("Resolver %s failed to answer some queries", resolver),
 			)
 		case nsuccess > 0 && nfail == 0:
 			results[resultSuccess]++
 			util.Log(
 				checkName,
 				util.LevelInfo,
-				"RESOLVER_WORKS",
-				fmt.Sprintf("Resolver %s is answering queries", resolver),
+				fmt.Sprintf("%s_RESOLVER_WORKS", strings.ToUpper(rtype)),
+				fmt.Sprintf("Resolver %s answered all queries", resolver),
 			)
 		case nsuccess == 0 && nfail == 0:
 			// there were no names on the list
@@ -137,18 +138,52 @@ func queryResolver(name string, resolver string) bool {
 		return false
 	}
 
+	answers := append(answersA, answersAAAA...)
+
 	util.Log(
 		checkName,
 		util.LevelInfo,
 		"RESOLVER_ANSWERS",
-		fmt.Sprintf("Resolver %s's answer(s) to query %s is: %v + %v", resolver, name, answersA, answersAAAA),
+		fmt.Sprintf("Resolver %s's answer(s) to query %s is: %v", resolver, name, answers),
 	)
 
 	// verify if answers are in predefined known CIDR ranges
-	answers := append(answersA, answersAAAA...)
 	for _, ip := range answers {
 		util.CheckIPForProvider(checkName, ip, name)
 	}
 
 	return true
+}
+
+func testResolversOnAddressFamily(rtype string, af string, resolvers []string) {
+	if shouldCheckDNSFunction("ping") {
+		reportResolversOnAddressFamily(rtype, af, "PING", "reachable", resolvers, pingResolvers(rtype, resolvers))
+	}
+	if shouldCheckDNSFunction("query") {
+		reportResolversOnAddressFamily(rtype, af, "QUERY", "answering", resolvers, queryResolvers(rtype, resolvers))
+	}
+}
+
+func reportResolversOnAddressFamily(rtype string, af string, test string, verb string, resolvers []string, results multipleResult) {
+	switch {
+	case len(resolvers) == results[resultSuccess]:
+		util.Log(checkName, util.LevelInfo,
+			fmt.Sprintf("%s_RESOLVER_%s_OK", strings.ToUpper(rtype), test),
+			fmt.Sprintf("%s %s DNS resolvers %v are %s", strings.Title(rtype), af, resolvers, verb),
+		)
+	case results[resultPartial] > 0:
+		util.Log(checkName, util.LevelWarning,
+			fmt.Sprintf("%s_RESOLVER_%s_PARTIAL", strings.ToUpper(rtype), test),
+			fmt.Sprintf("%s %s DNS resolvers %v are only partially %s", strings.Title(rtype), af, resolvers, verb),
+		)
+	default:
+		util.Log(checkName, util.LevelError,
+			fmt.Sprintf("%s_RESOLVER_%s_FAIL", strings.ToUpper(rtype), test),
+			fmt.Sprintf("%s %s DNS resolvers %v are not %s", strings.Title(rtype), af, resolvers, verb),
+		)
+	}
+}
+
+func shouldCheckDNSFunction(function string) bool {
+	return util.GetConfigBoolParam("dns_resolvers", function, false)
 }
