@@ -15,14 +15,20 @@ var defaultCIDRConfig = os.Getenv("HOME") + "/.config/netiscope-cidr.ini"
 var cfg *ini.File
 var cidrCfg *ini.File
 var (
-	flagConfig   string
-	flagCIDR     string
-	flagSection  string
-	flagSkipIPv4 bool
-	flagSkipIPv6 bool
-	flagLogLevel string
-	flagVerbose  bool
-	flagColor    bool
+	flagConfig    string
+	flagCIDR      string
+	flagSection   string
+	flagSkipIPv4  bool
+	flagSkipIPv6  bool
+	flagForceIPv4 bool
+	flagForceIPv6 bool
+	flagLogLevel  string
+	flagVerbose   bool
+	flagColor     bool
+
+	// network interface check can signal if there were no routable addresses found
+	noUsableIPv4 bool
+	noUsableIPv6 bool
 )
 
 // SetupFlags defines the command line flags we recognise
@@ -36,6 +42,8 @@ func SetupFlags() {
 	flag.StringVar(&flagSection, "s", "checks", "Which section lists the checks to execute. Default is 'checks'.")
 	flag.BoolVar(&flagSkipIPv4, "skip4", false, "Skip IPv4 checks")
 	flag.BoolVar(&flagSkipIPv6, "skip6", false, "Skip IPv6 checks")
+	flag.BoolVar(&flagForceIPv4, "force4", false, "Force IPv4 checks even if no usable local IPv4 addresses are found")
+	flag.BoolVar(&flagForceIPv6, "force6", false, "Force IPv6 checks even if no usable local IPv6 addresses are found")
 	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'. Default is 'info'.")
 	flag.BoolVar(&flagVerbose, "v", false, "Shorthand to set log level to 'detail'")
 	flag.BoolVar(&flagColor, "color", false, "Enable colored output")
@@ -138,12 +146,12 @@ func GetConfigBoolParam(section string, key string, deflt bool) bool {
 
 // SkipIPv4 decides if IPv4 related checks should be skipped
 func SkipIPv4() bool {
-	return flagSkipIPv4 || cfg.Section("main").Key("skip_ipv4").MustBool(false)
+	return !flagForceIPv4 && (flagSkipIPv4 || cfg.Section("main").Key("skip_ipv4").MustBool(false) || noUsableIPv4)
 }
 
-// SkipIPv6 decides if IPv4 related checks should be skipped
+// SkipIPv6 decides if IPv6 related checks should be skipped
 func SkipIPv6() bool {
-	return flagSkipIPv6 || cfg.Section("main").Key("skip_ipv6").MustBool(false)
+	return !flagForceIPv6 && (flagSkipIPv6 || cfg.Section("main").Key("skip_ipv6").MustBool(false) || noUsableIPv6)
 }
 
 // GetPingCount returns how many ping packets should be sent
@@ -170,5 +178,21 @@ func loadProviderCIDRBlocks() {
 		for _, cidr := range cidrs {
 			cidrProviders[key] = append(cidrProviders[key], makeIPNet(cidr))
 		}
+	}
+}
+
+// SetFailedIPv4 is called to signal the abence of usable IPv4 addesses
+func SetFailedIPv4() {
+	noUsableIPv4 = true
+	if flagForceIPv4 {
+		Log("main", LevelWarning, "FORCE_IPV4", "IPv4 check are forced by configuration")
+	}
+}
+
+// SetFailedIPv6 is called to signal the abence of usable IPv6 addesses
+func SetFailedIPv6() {
+	noUsableIPv6 = true
+	if flagForceIPv6 {
+		Log("main", LevelWarning, "FORCE_IPV6", "IPv6 check are forced by configuration")
 	}
 }

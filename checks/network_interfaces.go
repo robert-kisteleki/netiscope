@@ -36,12 +36,14 @@ func CheckNetworkInterfaces() {
 
 	// any useful IPv4 addresses found?
 	if !util.SkipIPv4() && !IPv4Unicast {
-		util.Log(checkName, util.LevelWarning, "NO_IPV4", "No routable IPv4 addresses found")
+		util.Log(checkName, util.LevelWarning, "NO_IPV4", "No routable IPv4 addresses found, disabling IPv4 checks")
+		util.SetFailedIPv4()
 	}
 
 	// any useful addresses IPv6 found?
 	if !util.SkipIPv6() && !IPv6Unicast {
-		util.Log(checkName, util.LevelWarning, "NO_IPV6", "No routable IPv6 addresses found")
+		util.Log(checkName, util.LevelWarning, "NO_IPV6", "No routable IPv6 addresses found, disabling IPv6 checks")
+		util.SetFailedIPv6()
 	}
 
 	// any useful addresses found at all?

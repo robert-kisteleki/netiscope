@@ -90,6 +90,7 @@ Notable command line options:
   * `-C CIDRFILE` specifies a provider CIDR list file
   * `-s SECTION` specifies a configuration section list sthe checks to execute instead of `checks`
   * `-skip4` and `-skip6` disable IPV4/IPv6 checks, respectively
+  * `-force4` and `-force6` enforce IPV4/IPv6 checks, respectively, even if no useful network interfaces are found
   * `-l LEVEL` sets the log level. LEVEL can be _detail_, _info_ (default), _warning_ or _error_
   * `-v` is a shorthand to increase logging to _detail_ level
   * `-color` enables (ANSI) output colors
@@ -99,6 +100,7 @@ The _configuration file_ has several sections:
     * `loglevel`
     * `color`
     * `skip_ipv4` and `skip_ipv6`
+    * `force_ipv4` and `force_ipv6`
     * `ping_packets`
   * The `checks` section lists the checks to execute
     * Each _check_ has (or can have) its own section defining options for the particular check
