@@ -1,5 +1,9 @@
-CHANGES
-=======
+## CHANGES
+
+xxx
+  * further unification of local and open resolver check code
+  * skip checks for IPv4/IPv6 if no relevant network interfaces are found
+    and add `force4` and `force6` parameters to override this
 
 0.1.20200723
   * added DNS queries to dns_open_resolvers and refactored to share code with dns_local_resolvers
