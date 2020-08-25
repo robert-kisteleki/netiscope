@@ -181,7 +181,7 @@ func loadProviderCIDRBlocks() {
 	}
 }
 
-// SetFailedIPv4 is called to signal the abence of usable IPv4 addesses
+// SetFailedIPv4 is called to signal the absence of usable IPv4 addesses
 func SetFailedIPv4() {
 	noUsableIPv4 = true
 	if flagForceIPv4 {
@@ -189,7 +189,7 @@ func SetFailedIPv4() {
 	}
 }
 
-// SetFailedIPv6 is called to signal the abence of usable IPv6 addesses
+// SetFailedIPv6 is called to signal the absence of usable IPv6 addesses
 func SetFailedIPv6() {
 	noUsableIPv6 = true
 	if flagForceIPv6 {
