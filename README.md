@@ -67,7 +67,7 @@ Like with the local DNS resolvers, each one is pinged and a series of DNS lookup
 
 The checks could also include:
   * (TODO, possible) Wifi signal/noise/channel/rate/packet loss/...
-  * (TODO, possible) Check of DoT (DNS over TLS) or DoH (DNS over HTTPS) are available and working
+  * (TODO, possible) Check of DoT (DNS over TLS) or DoH (DNS over HTTPS) or DNSSEC validation are available and working
   * (TODO, possible) Query root name servers and/or traceroute to them
   * (TODO, possible) Traceroute to known targets (M-Lab, RIPE Atlas anchors, ...)
   * (TODO, possible) Detect presence of a captive portal
@@ -78,6 +78,8 @@ The checks could also include:
     * whether protocols such as QUIC can be used
   * (TODO, possible) IPv6 PMTUD to various targets
   * (TODO, possible) Check ability to spoof packets / BCP38 compliance
+  * (TODO, possible) Measure upstream/downstream bandwidth
+  * (TODO, possible) Outbound port filtering
   * (TODO, possible) User defined check: favourite VPN, personal webserver, ... using ping/HTTPS/etc
 
 
