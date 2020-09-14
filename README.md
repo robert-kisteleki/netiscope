@@ -63,12 +63,20 @@ Check if well-known open DNS resolvers are reachable. "Well-known" includes:
 
 Like with the local DNS resolvers, each one is pinged and a series of DNS lookups (for well known targets such as google.com) are executed against them. The results are matched against a known-good list of potential responses (see CIDR list).
 
+### 4. Root DNS servers
+
+Test all root name servers (A..M) on IPV4 and IPv6 if possible:
+  * ping (note: G-root doesn't answer pings)
+  * query for "SOA ." and check basic sanity of the answer
+  * query for a set of known TLDs and list their defined nameservers
+  * query for randomly generaed TLD names and expect that to fail
+
 ### X. Future checks
 
 The checks could also include:
   * (TODO, possible) Wifi signal/noise/channel/rate/packet loss/...
   * (TODO, possible) Check of DoT (DNS over TLS) or DoH (DNS over HTTPS) or DNSSEC validation are available and working
-  * (TODO, possible) Query root name servers and/or traceroute to them
+  * (TODO) Traceroute to root DNS servers and local/open resolvers, others
   * (TODO, possible) Traceroute to known targets (M-Lab, RIPE Atlas anchors, ...)
   * (TODO, possible) Detect presence of a captive portal
   * (TODO, possible) Availability of popular services (google, facebook, ...), perhaps including:
@@ -106,7 +114,7 @@ The _configuration file_ has several sections:
     * `force_ipv4` and `force_ipv6`
     * `ping_packets`
   * The `checks` section lists the checks to execute
-    * Each _check_ has (or can have) its own section defining options for the particular check
+    * Each _check_ has (or can have) its own section (as well as shared ones like `dns` or `dns_resolvers`) defining options for the particular check
   * The `CIDRFILE` contains the list of CIDR blocks for (some) providers. This allows checking
     if the IP address used (or looked up) for that provider is in this "known good" list. This
     file is looked up using the `-C` option, or where the main config file is.

@@ -8,124 +8,82 @@ import (
 	"netiscope/util"
 )
 
-type multipleResult [3]int
+// query the predefined list of names from a set of resolvers
+// return a MultipleResult
+func queryNamesFromResolvers(rtype string, resolvers []string) (results measurements.MultipleResult) {
 
-const (
-	resultSuccess = 0
-	resultPartial = 1
-	resultFailure = 2
-)
-
-// ping resolvers
-// return tuple of [#success, #partial, #fail]
-func pingResolvers(rtype string, resolvers []string) (results multipleResult) {
-	for _, resolver := range resolvers {
+	// the names to look up are in the config file
+	names := util.GetDNSNamesToLookup()
+	if len(names) == 0 {
 		util.Log(
 			checkName,
-			util.LevelInfo,
-			fmt.Sprintf("PING_%s_RESOLVER", strings.ToUpper(rtype)),
-			fmt.Sprintf("Pinging resolver %s", resolver),
+			util.LevelFatal,
+			fmt.Sprintf("%s_NO_NAMES", strings.ToUpper(rtype)),
+			"The list of names to look up is empty",
 		)
-		loss := measurements.Ping(checkName, resolver)
-		switch {
-		case loss == 0.0:
-			results[resultSuccess]++
-			util.Log(
-				checkName,
-				util.LevelInfo,
-				"PING_WORKS",
-				fmt.Sprintf("Resolver %s is reachable", resolver),
-			)
-		case loss == 100.0:
-			results[resultFailure]++
-			util.Log(
-				checkName,
-				util.LevelWarning,
-				"PING_FAILS",
-				fmt.Sprintf("Resolver %s is not reachable", resolver),
-			)
-		default:
-			results[resultPartial]++
-			util.Log(
-				checkName,
-				util.LevelWarning,
-				"PING_WARNING",
-				fmt.Sprintf("Resolver %s shows packet loss", resolver),
-			)
-		}
+		return
 	}
 
-	return
-}
-
-// query some names from the resolvers
-// return tuple of [#success, #partial, #fail]
-func queryResolvers(rtype string, resolvers []string) (results multipleResult) {
 	for _, resolver := range resolvers {
-		names := util.GetDNSNamesToLookup()
-		var nsuccess, nfail int
+
+		// collect the results of looking up all names with this resolver
+		var resolverResults measurements.MultipleResult
 		for _, name := range names {
-			if queryResolver(name, resolver) {
-				nsuccess++
-			} else {
-				nfail++
-			}
+			resolverResults[queryNameFromResolver(name, resolver)]++
 		}
+
+		// now evaluate this resolver by looking at the the collected results
+		// also update the ultimate returned result
 		switch {
-		case nsuccess == 0 && nfail > 0:
-			results[resultFailure]++
+		case resolverResults[measurements.ResultSuccess] == 0 && resolverResults[measurements.ResultFailure] > 0:
+			results[measurements.ResultFailure]++
 			util.Log(
 				checkName,
 				util.LevelError,
-				fmt.Sprintf("%s_RESOLVER_FAILS", strings.ToUpper(rtype)),
+				fmt.Sprintf("QUERY_%s_FAILS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s is not answering queries", resolver),
 			)
-		case nsuccess > 0 && nfail > 0:
-			results[resultPartial]++
+		case resolverResults[measurements.ResultSuccess] > 0 && resolverResults[measurements.ResultFailure] > 0:
+			results[measurements.ResultPartial]++
 			util.Log(
 				checkName,
 				util.LevelWarning,
-				fmt.Sprintf("%s_RESOLVER_FLAKY", strings.ToUpper(rtype)),
+				fmt.Sprintf("QUERY_%s_FLAKY", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s failed to answer some queries", resolver),
 			)
-		case nsuccess > 0 && nfail == 0:
-			results[resultSuccess]++
+		case resolverResults[measurements.ResultSuccess] > 0 && resolverResults[measurements.ResultFailure] == 0:
+			results[measurements.ResultSuccess]++
 			util.Log(
 				checkName,
 				util.LevelInfo,
-				fmt.Sprintf("%s_RESOLVER_WORKS", strings.ToUpper(rtype)),
+				fmt.Sprintf("QUERY_%s_WORKS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s answered all queries", resolver),
 			)
-		case nsuccess == 0 && nfail == 0:
-			// there were no names on the list
 		}
 	}
 	return
 }
 
 // ask one resolver for one query
-// @return if it was successful
-func queryResolver(name string, resolver string) bool {
-	var answersA, answersAAAA []string
-	var statsA, statsAAAA string
+// return ResultCode to indicate if it was successful
+func queryNameFromResolver(name string, resolver string) measurements.ResultCode {
+	var answersA, answersAAAA map[string][]string
 	var err error
 
 	if !util.SkipIPv4() {
-		answersA, statsA, err = measurements.QueryDNSResolvers(name, "A", resolver)
+		answersA, err = measurements.DNSQuery(checkName, name, "A", resolver, false, true)
 		if err != nil {
 			util.Log(checkName, util.LevelError, "RESOLVER_ERROR_A", err.Error())
-			return false
+			return measurements.ResultFailure
 		}
-		util.Log(checkName, util.LevelDetail, "RESOLVER_STATS", statsA)
 	}
 
 	if !util.SkipIPv6() {
-		answersAAAA, statsAAAA, err = measurements.QueryDNSResolvers(name, "AAAA", resolver)
+		answersAAAA, err = measurements.DNSQuery(checkName, name, "AAAA", resolver, false, true)
 		if err != nil {
 			util.Log(checkName, util.LevelError, "RESOLVER_ERROR_AAAA", err.Error())
-			return false
+			return measurements.ResultFailure
 		}
-		util.Log(checkName, util.LevelDetail, "RESOLVER_STATS", statsAAAA)
 	}
 
 	if len(answersA)+len(answersAAAA) == 0 {
@@ -135,10 +93,10 @@ func queryResolver(name string, resolver string) bool {
 			"RESOLVER_ZERO_ANSWER",
 			fmt.Sprintf("Resolver %s gave no answers to query %s", resolver, name),
 		)
-		return false
+		return measurements.ResultFailure
 	}
 
-	answers := append(answersA, answersAAAA...)
+	answers := append(answersA["A"], answersAAAA["AAAA"]...)
 
 	util.Log(
 		checkName,
@@ -149,41 +107,73 @@ func queryResolver(name string, resolver string) bool {
 
 	// verify if answers are in predefined known CIDR ranges
 	for _, ip := range answers {
-		util.CheckIPForProvider(checkName, ip, name)
+		util.CheckIPForProvider(checkName, fmt.Sprint(ip), name)
 	}
 
-	return true
+	return measurements.ResultSuccess
 }
 
-func testResolversOnAddressFamily(rtype string, af string, resolvers []string) {
+// test a set of resolvers on a particular address family
+// mnemo: menmonic to use in log
+// af: address family (IPv4 or IPv6)
+// kind: which kind of resolver are we testing (local or open)
+// resolvers: the resolvers to test
+func testResolversOnAddressFamily(mnemo string, af string, kind string, resolvers []string) {
 	if shouldCheckDNSFunction("ping") {
-		reportResolversOnAddressFamily(rtype, af, "PING", "reachable", resolvers, pingResolvers(rtype, resolvers))
+		reportResolversOnAddressFamily(
+			mnemo, af, kind, "PING", "reachable", resolvers,
+			measurements.PingServers(checkName, mnemo, resolvers),
+		)
 	}
 	if shouldCheckDNSFunction("query") {
-		reportResolversOnAddressFamily(rtype, af, "QUERY", "answering", resolvers, queryResolvers(rtype, resolvers))
+		reportResolversOnAddressFamily(
+			mnemo, af, kind, "QUERY", "answering", resolvers,
+			queryNamesFromResolvers(mnemo, resolvers),
+		)
 	}
 }
 
-func reportResolversOnAddressFamily(rtype string, af string, test string, verb string, resolvers []string, results multipleResult) {
+// report on results for a set of resolvers on a particular address family
+// mnemo: menmonic to use in log
+// af: address family (IPv4 or IPv6)
+// kind: which kind of resolver are we testing (local or open)
+// test: which test (PING or QUERY)
+// verb: an applicable verb for this test (reachable (PING) or answering (QUERY))
+// resolvers: the resolvers to test
+// results: the results to analyse
+func reportResolversOnAddressFamily(
+	mnemo string,
+	af string,
+	kind string,
+	test string,
+	verb string,
+	resolvers []string,
+	results measurements.MultipleResult,
+) {
+	isare := "are"
+	if len(resolvers) == 1 {
+		isare = "is"
+	}
 	switch {
-	case len(resolvers) == results[resultSuccess]:
+	case results[measurements.ResultPartial] == 0 && results[measurements.ResultFailure] == 0:
 		util.Log(checkName, util.LevelInfo,
-			fmt.Sprintf("%s_RESOLVER_%s_OK", strings.ToUpper(rtype), test),
-			fmt.Sprintf("%s %s DNS resolvers %v are %s", strings.Title(rtype), af, resolvers, verb),
+			fmt.Sprintf("%s_%s_OK", test, mnemo),
+			fmt.Sprintf("%s %s %v %s %s properly", af, kind, resolvers, isare, verb),
 		)
-	case results[resultPartial] > 0:
+	case results[measurements.ResultPartial] > 0:
 		util.Log(checkName, util.LevelWarning,
-			fmt.Sprintf("%s_RESOLVER_%s_PARTIAL", strings.ToUpper(rtype), test),
-			fmt.Sprintf("%s %s DNS resolvers %v are only partially %s", strings.Title(rtype), af, resolvers, verb),
+			fmt.Sprintf("%s_%s_PARTIAL", test, mnemo),
+			fmt.Sprintf("%s %s %v %s only partially %s", af, kind, resolvers, isare, verb),
 		)
 	default:
 		util.Log(checkName, util.LevelError,
-			fmt.Sprintf("%s_RESOLVER_%s_FAIL", strings.ToUpper(rtype), test),
-			fmt.Sprintf("%s %s DNS resolvers %v are not %s", strings.Title(rtype), af, resolvers, verb),
+			fmt.Sprintf("%s_%s_FAIL", test, mnemo),
+			fmt.Sprintf("%s %s %v %s not %s properly", af, kind, resolvers, isare, verb),
 		)
 	}
 }
 
+// determine if, according to the configuration, this test should be done
 func shouldCheckDNSFunction(function string) bool {
-	return util.GetConfigBoolParam("dns_resolvers", function, false)
+	return util.GetConfigBoolParam("dns", function, false)
 }

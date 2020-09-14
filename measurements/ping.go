@@ -4,14 +4,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sparrc/go-ping"
-
 	"netiscope/util"
+
+	"github.com/sparrc/go-ping"
 )
 
-// Ping pings (duh) a specific target
-// Return: packet loss %
-func Ping(check string, target string) float64 {
+// Ping (duh) a specific target using our favourite library
+// return a ReultCode
+func Ping(check string, target string, mnemo string) (results ResultCode) {
+	util.Log(
+		check,
+		util.LevelInfo,
+		fmt.Sprintf("PING_%s", mnemo),
+		fmt.Sprintf("Pinging %s", target),
+	)
 
 	var packetloss float64
 	pinger, err := ping.NewPinger(target)
@@ -23,7 +29,7 @@ func Ping(check string, target string) float64 {
 		util.Log(
 			check,
 			util.LevelDetail,
-			"PING",
+			"PING_PACKET",
 			fmt.Sprintf(
 				"ping: %d bytes from %s: icmp_seq=%d time=%v ttl=%v",
 				pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.Ttl,
@@ -55,5 +61,41 @@ func Ping(check string, target string) float64 {
 	pinger.Timeout = time.Duration(util.GetPingCount()) * time.Second
 	pinger.Run()
 
-	return packetloss
+	switch {
+	case packetloss == 0.0:
+		util.Log(
+			check,
+			util.LevelInfo,
+			fmt.Sprintf("PING_%s_WORKS", mnemo),
+			fmt.Sprintf("Server %s is reachable", target),
+		)
+		return ResultSuccess
+	case packetloss == 100.0:
+		util.Log(
+			check,
+			util.LevelWarning,
+			fmt.Sprintf("PING_%s_FAILS", mnemo),
+			fmt.Sprintf("Server %s is not reachable", target),
+		)
+		return ResultFailure
+	default:
+		util.Log(
+			check,
+			util.LevelWarning,
+			fmt.Sprintf("PING_%s_WARNING", mnemo),
+			fmt.Sprintf("Server %s shows packet loss", target),
+		)
+		return ResultPartial
+	}
+}
+
+// PingServers pings a set of servers
+// return a MultipleResult
+func PingServers(check string, mnemo string, resolvers []string) (results MultipleResult) {
+	for _, resolver := range resolvers {
+		pingResult := Ping(check, resolver, mnemo)
+		results[pingResult]++
+	}
+
+	return
 }

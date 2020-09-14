@@ -169,6 +169,16 @@ func GetDNSNamesToLookup() []string {
 	return cfg.Section("dns").Key("name").ValueWithShadows()
 }
 
+// GetTLDsToLookup returns the list of TLDs to look up with root DNS servers
+func GetTLDsToLookup() []string {
+	return cfg.Section("dns").Key("tld").ValueWithShadows()
+}
+
+// GetRandomTLDAmount returns how may random domains should be tried against root DNS servers
+func GetRandomTLDAmount() int {
+	return cfg.Section("dns").Key("random").MustInt(3)
+}
+
 // load known CIDR prefixes for some providers
 func loadProviderCIDRBlocks() {
 	keys := cidrCfg.Section("cidrs").KeyStrings()

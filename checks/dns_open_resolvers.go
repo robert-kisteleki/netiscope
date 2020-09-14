@@ -5,9 +5,9 @@ import (
 	"netiscope/util"
 )
 
-// CheckOpenResolvers checks all (defined) open DNS resolvers
+// CheckOpenDNSResolvers checks all (defined) open DNS resolvers
 // it's basically a shorthand for doing checks against the predefined open resolvers
-func CheckOpenResolvers() {
+func CheckOpenDNSResolvers() {
 	CheckGoogleDNS()
 	CheckCloudflareDNS()
 	CheckQuad9DNS()
@@ -66,6 +66,6 @@ func checkOpenResolver(provider string, af string, resolvers []string) {
 				provider, af, resolvers,
 			),
 		)
-		testResolversOnAddressFamily("open", "IPv4", resolvers)
+		testResolversOnAddressFamily("OPEN_DNS_RESOLVER", af, "open DNS resolvers", resolvers)
 	}
 }

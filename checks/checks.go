@@ -8,11 +8,12 @@ var (
 	// what checks are available
 	knownChecks = map[string]checkFunction{
 		"network_interfaces":  CheckNetworkInterfaces,
-		"dns_local_resolvers": CheckDNSResolvers,
-		"dns_open_resolvers":  CheckOpenResolvers,
+		"dns_local_resolvers": CheckLocalDNSResolvers,
+		"dns_open_resolvers":  CheckOpenDNSResolvers,
 		"1111":                CheckCloudflareDNS,
 		"8888":                CheckGoogleDNS,
 		"9999":                CheckQuad9DNS,
+		"dns_root_servers":    CheckDNSRootServers,
 	}
 	checkName string         // name of the currently running check
 	findings  []util.Finding // our findings
