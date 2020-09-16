@@ -1,5 +1,8 @@
 ## CHANGES
 
+0.x
+  * switched to use go modules for dependencies
+
 0.2.20200914
   * added dns root servers check (ping, query SOA, query known TLDs, query random TLDs)
   * further unification of local and open resolver check code

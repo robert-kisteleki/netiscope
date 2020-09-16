@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"gopkg.in/ini.v1" //    https://github.com/go-ini/ini
+    "github.com/go-ini/ini"
 )
 
 var defaultConfig = os.Getenv("HOME") + "/.config/netiscope.ini"

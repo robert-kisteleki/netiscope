@@ -16,19 +16,16 @@ cd ~/go/src/
 git clone https://github.com/robert-kisteleki/netiscope.git
 ```
 
-There are a few Go packages that are required to compile:
+There are a few Go packages that are required to compile, you can get them by:
 
 ```
-go get github.com/miekg/dns
-go get github.com/fatih/color
-go get github.com/sparrc/go-ping
-go get gopkg.in/ini.v1
+cd ~/go/src/netiscope/
+go mod download
 ```
 
 Now you're ready to compile and run:
 
 ```
-cd ~/go/src/netiscope/
 go build netiscope
 ./netiscope -v -color
 ```

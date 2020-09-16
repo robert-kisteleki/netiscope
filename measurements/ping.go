@@ -6,7 +6,7 @@ import (
 
 	"netiscope/util"
 
-	"github.com/sparrc/go-ping"
+	"github.com/go-ping/ping"
 )
 
 // Ping (duh) a specific target using our favourite library
