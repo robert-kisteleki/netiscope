@@ -1,3 +1,10 @@
+/*
+  Netiscope
+
+  For copyright, license, doscumentation, full source and others see
+  https://github.com/robert-kisteleki/netiscope
+*/
+
 package main
 
 import (
