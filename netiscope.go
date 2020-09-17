@@ -1,19 +1,20 @@
 /*
   Netiscope
 
-  For copyright, license, doscumentation, full source and others see
+  For copyright, license, documentation, full source code and others see
   https://github.com/robert-kisteleki/netiscope
 */
 
 package main
 
 import (
+	"fmt"
 	"netiscope/checks"
 	"netiscope/util"
 )
 
 const (
-	version = "0.0.1"
+	version = "0.2.20200914"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func start() {
 		"main",
 		util.LevelInfo,
 		"START",
-		"Started",
+		fmt.Sprintf("Started (version %s)", version),
 	)
 }
 
