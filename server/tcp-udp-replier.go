@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var (
@@ -26,6 +27,7 @@ var (
 )
 
 const response = "Netiscope\n"
+const logMaxLen = 32
 
 var (
 	logFile *os.File
@@ -34,8 +36,37 @@ var (
 
 var signalChannel = make(chan os.Signal, 1)
 
+func logThis(localAddr string, remoteAddr string, data []byte, n int) {
+	if n == 0 {
+		logger.Printf("%s %v %v TIMEOUT", flagProto, localAddr, remoteAddr)
+	} else {
+		if n > logMaxLen {
+			n = logMaxLen
+		}
+		logger.Printf("%s %v %v %+q", flagProto, localAddr, remoteAddr, data[:n])
+	}
+}
+
 func handleTCP(conn net.Conn) {
-	logger.Printf("%s %v %v", flagProto, conn.LocalAddr(), conn.RemoteAddr())
+	err := conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+	if err != nil {
+		fmt.Println(err)
+		//return
+	}
+	buffer := make([]byte, 2048)
+	var n int
+	n, err = conn.Read(buffer[:]) // receive data, if any
+	if err != nil {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// time out
+			logThis(conn.LocalAddr().String(), conn.RemoteAddr().String(), buffer, 0)
+		} else {
+			fmt.Println(err)
+			//return
+		}
+	} else {
+		logThis(conn.LocalAddr().String(), conn.RemoteAddr().String(), buffer, n)
+	}
 	conn.Write([]byte(response))
 	conn.Close()
 }
@@ -133,12 +164,13 @@ func main() {
 
 		buffer := make([]byte, 2048)
 		for {
-			_, addr, err := pc.ReadFrom(buffer)
+			n, addr, err := pc.ReadFrom(buffer)
 			if err != nil {
 				fmt.Println(err)
 				//return
 			}
-			logger.Printf("%s %v %v", flagProto, pc.LocalAddr(), addr)
+			logThis(pc.LocalAddr().String(), addr.String(), buffer, n)
+
 			_, err = pc.WriteTo([]byte(response), addr)
 			if err != nil {
 				fmt.Println(err)
