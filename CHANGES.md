@@ -2,6 +2,8 @@
 
 0.x
   * switched to use go modules for dependencies
+  * added a little server tool to reply to UDP or TCP connections
+  * added port filtering checks
 
 0.2.20200914
   * added dns root servers check (ping, query SOA, query known TLDs, query random TLDs)

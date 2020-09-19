@@ -14,6 +14,7 @@ var (
 		"8888":                CheckGoogleDNS,
 		"9999":                CheckQuad9DNS,
 		"dns_root_servers":    CheckDNSRootServers,
+		"port_filtering":      CheckPortFiltering,
 	}
 	checkName string         // name of the currently running check
 	findings  []util.Finding // our findings

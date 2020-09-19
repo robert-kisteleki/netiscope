@@ -68,6 +68,20 @@ Test all root name servers (A..M) on IPV4 and IPv6 if possible:
   * query for a set of known TLDs and list their defined nameservers
   * query for randomly generaed TLD names and expect that to fail
 
+### 5. Port filtering
+
+The port filtering check tries to make outgoing connections to a number of ports in order to see if these are blocked or not. The default configuration contains a specific target server (netiscope[.]net) for these. Instead of a full protocol implementation the response from the default server is a pre-set value. If enabled (which is the default setting), the check also verifies if the response is this expected value or not; when checking against other servers this part of the check should be disabled as otherwise they will fail.
+
+As per the default configuration the following connections are tried:
+  * SSH (22/TCP)
+  * TELNET (23/TCP)
+  * SMTP (25/TCP)
+  * DNS (53/UDP and 53/TCP)
+  * HTTP (80/TCP) and HTTPS (443/TCP)
+  * POP3 (110/TCP) and POP3S (995/TCP)
+  * IMAP (143/TCP)
+  * NTP (123/UDP)
+
 ### X. Future checks
 
 The checks could also include:
@@ -84,7 +98,6 @@ The checks could also include:
   * (TODO, possible) IPv6 PMTUD to various targets
   * (TODO, possible) Check ability to spoof packets / BCP38 compliance
   * (TODO, possible) Measure upstream/downstream bandwidth
-  * (TODO, possible) Outbound port filtering
   * (TODO, possible) User defined check: favourite VPN, personal webserver, ... using ping/HTTPS/etc
 
 

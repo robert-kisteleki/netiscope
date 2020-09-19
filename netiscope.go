@@ -13,10 +13,6 @@ import (
 	"netiscope/util"
 )
 
-const (
-	version = "0.2.20200914"
-)
-
 func main() {
 	util.SetupFlags()
 	util.ReadConfig()
@@ -51,7 +47,7 @@ func start() {
 		"main",
 		util.LevelInfo,
 		"START",
-		fmt.Sprintf("Started (version %s)", version),
+		fmt.Sprintf("Started (version %s)", util.Version),
 	)
 }
 

@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
-    "github.com/go-ini/ini"
+	"github.com/go-ini/ini"
 )
 
 var defaultConfig = os.Getenv("HOME") + "/.config/netiscope.ini"
@@ -205,4 +206,24 @@ func SetFailedIPv6() {
 	if flagForceIPv6 {
 		Log("main", LevelWarning, "FORCE_IPV6", "IPv6 check are forced by configuration")
 	}
+}
+
+// GetTargetsToPortCheck returns the list of [target,port,protocol] to check for port filtering
+func GetTargetsToPortCheck() [][]string {
+	list := cfg.Section("port_filtering").Key("port_check").ValueWithShadows()
+	var splitList [][]string
+	for _, item := range list {
+		splitList = append(splitList, strings.Split(item, ","))
+	}
+	return splitList
+}
+
+// CheckPortFilteringResponse decides if answers to port filtering queries should be checked
+func CheckPortFilteringResponse() bool {
+	return cfg.Section("port_filtering").Key("netiscope_response").MustBool(false)
+}
+
+// GetPortFilteringTimeout specifies the network timeout (seconds) for port filtering checks
+func GetPortFilteringTimeout() int {
+	return cfg.Section("port_filtering").Key("timeout").MustInt(3)
 }
