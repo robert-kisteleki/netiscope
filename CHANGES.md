@@ -1,6 +1,6 @@
 ## CHANGES
 
-0.x
+0.3.20200919
   * switched to use go modules for dependencies
   * added a little server tool to reply to UDP or TCP connections
   * added port filtering checks
