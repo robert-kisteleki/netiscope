@@ -52,6 +52,7 @@ func start() {
 }
 
 func finish() {
+	util.ReportLogTotals()
 	util.Log(
 		"main",
 		util.LevelInfo,

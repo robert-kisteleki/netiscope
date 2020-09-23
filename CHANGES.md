@@ -1,5 +1,8 @@
 ## CHANGES
 
+0.x
+  * added a report on how many entries were made in the log, per log level (detail, info, warning, ...)
+
 0.3.20200919
   * switched to use go modules for dependencies
   * added a little server tool to reply to UDP or TCP connections

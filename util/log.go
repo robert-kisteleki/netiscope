@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -23,6 +24,13 @@ const (
 
 // LogLevel defines what should be loggged
 var LogLevel = LevelInfo // by default: info or above are reported
+
+// count the number of log entries
+var logEntryNumbers map[LogLevelType]int
+
+func init() {
+	logEntryNumbers = make(map[LogLevelType]int)
+}
 
 // Name returns the human readable name of a loglevel
 func (l LogLevelType) String() string {
@@ -71,6 +79,8 @@ func Log(check string, level LogLevelType, mnemonic string, details ...interface
 		(level == LevelInfo && LogLevel <= 1) ||
 		(level == LevelDetail && LogLevel == 0) {
 
+		logEntryNumbers[level]++
+
 		if ColoredOutput() {
 			color.Set(level.Color())
 			defer color.Unset()
@@ -88,6 +98,17 @@ func Log(check string, level LogLevelType, mnemonic string, details ...interface
 	}
 
 	addFinding(now, check, level, mnemonic, details)
+}
+
+// ReportLogTotals reports on (logs) the number of log entries received per level
+func ReportLogTotals() {
+	var entries []string
+	for _, level := range []LogLevelType{LevelDetail, LevelInfo, LevelWarning, LevelError, LevelFatal, LevelTodo} {
+		if logEntryNumbers[level] != 0 {
+			entries = append(entries, fmt.Sprintf("%s=%d", level.String(), logEntryNumbers[level]))
+		}
+	}
+	Log("main", LevelInfo, "REPORT", strings.Join(entries, ","))
 }
 
 // AddFinding is a shorthand to add a net Detail to the list
