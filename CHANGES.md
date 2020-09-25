@@ -1,6 +1,6 @@
 ## CHANGES
 
-0.x
+0.4.20200925
   * added a report on how many entries were made in the log, per log level (detail, info, warning, ...)
   * added checks for DoH (DNS over HTTPS)
 
