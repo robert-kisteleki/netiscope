@@ -15,6 +15,7 @@ var (
 		"9999":                CheckQuad9DNS,
 		"dns_root_servers":    CheckDNSRootServers,
 		"port_filtering":      CheckPortFiltering,
+		"doh_providers":       CheckDNSOverHTTPSProviders,
 	}
 	checkName string         // name of the currently running check
 	findings  []util.Finding // our findings

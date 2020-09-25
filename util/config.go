@@ -107,34 +107,6 @@ func ReadCIDRConfig() {
 	loadProviderCIDRBlocks()
 }
 
-// check which file exists, from a list of candidates in order of preference
-func whichFile(candidates []string) string {
-	for _, file := range candidates {
-		if file == "" {
-			continue
-		}
-		_, err := os.Stat(file)
-		if err != nil {
-			continue
-		}
-		return file
-	}
-	return ""
-}
-
-func setLogLevel(level string) {
-	switch level {
-	case "detail":
-		LogLevel = LevelDetail
-	case "info":
-		LogLevel = LevelInfo
-	case "warning":
-		LogLevel = LevelWarning
-	case "error":
-		LogLevel = LevelError
-	}
-}
-
 // GetChecks loads the list of checks to be run from the ini file
 func GetChecks() []string {
 	return cfg.Section(flagSection).KeyStrings()
@@ -210,12 +182,7 @@ func SetFailedIPv6() {
 
 // GetTargetsToPortCheck returns the list of [target,port,protocol] to check for port filtering
 func GetTargetsToPortCheck() [][]string {
-	list := cfg.Section("port_filtering").Key("port_check").ValueWithShadows()
-	var splitList [][]string
-	for _, item := range list {
-		splitList = append(splitList, strings.Split(item, ","))
-	}
-	return splitList
+	return splitConfigKeyList("port_filtering", "port_check")
 }
 
 // CheckPortFilteringResponse decides if answers to port filtering queries should be checked
@@ -226,4 +193,48 @@ func CheckPortFilteringResponse() bool {
 // GetPortFilteringTimeout specifies the network timeout (seconds) for port filtering checks
 func GetPortFilteringTimeout() int {
 	return cfg.Section("port_filtering").Key("timeout").MustInt(3)
+}
+
+// GetDoHProviders returns the list of DoH providers listed in the config file
+func GetDoHProviders() [][]string {
+	return splitConfigKeyList("doh", "provider")
+}
+
+// check which file exists, from a list of candidates in order of preference
+func whichFile(candidates []string) string {
+	for _, file := range candidates {
+		if file == "" {
+			continue
+		}
+		_, err := os.Stat(file)
+		if err != nil {
+			continue
+		}
+		return file
+	}
+	return ""
+}
+
+// parse log level as a string and set log level accordingly
+func setLogLevel(level string) {
+	switch level {
+	case "detail":
+		LogLevel = LevelDetail
+	case "info":
+		LogLevel = LevelInfo
+	case "warning":
+		LogLevel = LevelWarning
+	case "error":
+		LogLevel = LevelError
+	}
+}
+
+// split entries in a a section/key list at the "," separator
+func splitConfigKeyList(section string, key string) [][]string {
+	list := cfg.Section(section).Key(key).ValueWithShadows()
+	var splitList [][]string
+	for _, item := range list {
+		splitList = append(splitList, strings.Split(item, ","))
+	}
+	return splitList
 }

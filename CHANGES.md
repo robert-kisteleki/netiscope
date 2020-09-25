@@ -2,6 +2,7 @@
 
 0.x
   * added a report on how many entries were made in the log, per log level (detail, info, warning, ...)
+  * added checks for DoH (DNS over HTTPS)
 
 0.3.20200919
   * switched to use go modules for dependencies

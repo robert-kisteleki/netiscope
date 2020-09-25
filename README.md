@@ -82,11 +82,15 @@ As per the default configuration the following connections are tried:
   * IMAP (143/TCP)
   * NTP (123/UDP)
 
+### 6. DNS over HTTPS (DoH)
+
+In this check a series of name lookups are tried against a number of DoH providers. The list of DoH providers is defined in the [doh] section of the configuration file. Similary as with other DNS checks, the list of names to look up is defined in the [dns] section and the results are matched against a known-good list of potential responses (see CIDR list).
+
 ### X. Future checks
 
 The checks could also include:
   * (TODO, possible) Wifi signal/noise/channel/rate/packet loss/...
-  * (TODO, possible) Check of DoT (DNS over TLS) or DoH (DNS over HTTPS) or DNSSEC validation are available and working
+  * (TODO, possible) Check of DoT (DNS over TLS) or DNSSEC validation are available and working
   * (TODO) Traceroute to root DNS servers and local/open resolvers, others
   * (TODO, possible) Traceroute to known targets (M-Lab, RIPE Atlas anchors, ...)
   * (TODO, possible) Detect presence of a captive portal
