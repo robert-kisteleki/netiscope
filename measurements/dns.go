@@ -9,16 +9,22 @@ import (
 	"github.com/miekg/dns"
 )
 
+/*
+  the DNS checks are based on the excellent https://github.com/miekg/dns/ package
+  much of the client code is reused from the examples in https://github.com/miekg/exdns/
+*/
+
 // DNSQuery handles a DNS query/response against a particular server/resolver
-// much of this is reused from the examples in https://github.com/miekg/exdns/
 // target: is the name to look up
 // qType: is either A or AAAA
 // server: is the resolver we're asking
 // nsid: ask for NSID?
 // rd: ask for recursion?
+// do: ask for DNSSEC validation?
+// zeroID: set query ID to zero? usually no, but DoH prefers that
 // @return:
 // result: a list of results and options (IPs or SOA or NSID records and such)
-// error code upon error
+// dnserror: code upon error
 func DNSQuery(
 	check string,
 	target string,
@@ -26,32 +32,105 @@ func DNSQuery(
 	server string,
 	nsid bool,
 	rd bool,
+	do bool,
+	zeroID bool,
 ) (result map[string][]string, dnserror error) {
 
 	// TODO the result is not really flexible enough
-	result = make(map[string][]string)
+
 	dnserror = nil
 	server = net.JoinHostPort(server, "53")
 
+	query := prepareDNSQuery(target, qType, nsid, rd, do, zeroID)
+
 	c := new(dns.Client)
-
 	c.Net = "udp"
-	/*
-		if *four {
-			c.Net = "udp4"
-		}
-		if *six {
-			c.Net = "udp6"
-		}
-	*/
 
-	m := &dns.Msg{
+	response, rtt, err := c.Exchange(&query, server)
+	if err != nil {
+		dnserror = err
+		return
+	}
+	if response.Id != query.Id {
+		dnserror = fmt.Errorf("DNS ID mismatch (%v vs %v)", response.Id, query.Id)
+		return
+	}
+	if response.Rcode != dns.RcodeSuccess {
+		dnserror = fmt.Errorf("DNS response error (%v)", dns.RcodeToString[response.Rcode])
+		return
+	}
+
+	result = parseDNSResponse(response)
+
+	stats := fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, response.Len())
+	util.Log(check, util.LevelDetail, "DNS_QUERY_STATS", stats)
+
+	return
+}
+
+// CreateDNSQuery creates a DNS query and returns its on-the-wire encoding
+// target: is the name to look up
+// qType: is either A or AAAA
+// nsid: ask for NSID?
+// rd: ask for recursion?
+// do: ask for DNSSEC OK?
+// zeroID: use zero as query ID?
+// @return: an assembled DNS query in on-the-wire format
+func CreateDNSQuery(
+	target string,
+	qType string,
+	nsid bool,
+	rd bool,
+	do bool,
+	zeroID bool,
+) []byte {
+
+	query := prepareDNSQuery(target, qType, nsid, rd, do, zeroID)
+	buf, _ := query.Pack()
+
+	return buf
+}
+
+// ParseDNSResponse takes an on-the-wire response and extracts the results we're interested in
+// responseBytes: on-the-wire DNS response to parse
+// @return:
+// result: a list of results and options (IPs or SOA or NSID records and such)
+// error code upon error
+func ParseDNSResponse(responseBytes []byte) (result map[string][]string, err error) {
+	var response dns.Msg
+	err = response.Unpack(responseBytes)
+	if err != nil {
+		return
+	}
+
+	result = parseDNSResponse(&response)
+	return
+}
+
+// prepare a DNS query from a given set of parameters
+// target: is the name to look up
+// qType: is either A or AAAA
+// nsid: ask for NSID?
+// rd: ask for recursion?
+// do: ask for DNSSEC OK?
+// zeroID: use zero as query ID?
+// @return: the DNS query (using the type of the underlying DNS package)
+func prepareDNSQuery(
+	target string,
+	qType string,
+	nsid bool,
+	rd bool,
+	do bool,
+	zeroID bool,
+) dns.Msg {
+
+	query := dns.Msg{
 		MsgHdr: dns.MsgHdr{
 			RecursionDesired: rd,
 		},
 		Question: make([]dns.Question, 1),
 	}
-	m.Rcode = dns.RcodeSuccess
+	query.Rcode = dns.RcodeSuccess
 
 	qt := dns.TypeA
 	qc := dns.ClassINET
@@ -85,74 +164,61 @@ func DNSQuery(
 		}
 		o.Option = append(o.Option, e)
 		o.SetUDPSize(dns.DefaultMsgSize)
-		m.Extra = append(m.Extra, o)
+		query.Extra = append(query.Extra, o)
 	}
 
-	m.Question[0] = dns.Question{Name: dns.Fqdn(target), Qtype: qt, Qclass: uint16(qc)}
-	m.Id = dns.Id()
-	r, rtt, err := c.Exchange(m, server)
-	if err != nil {
-		dnserror = err
-		return
-	}
-	if r.Id != m.Id {
-		dnserror = fmt.Errorf("DNS ID mismatch (%v vs %v)", r.Id, m.Id)
-		return
-	}
-	if r.Rcode != dns.RcodeSuccess {
-		dnserror = fmt.Errorf("DNS response error (%v)", dns.RcodeToString[r.Rcode])
-		return
+	query.Question[0] = dns.Question{Name: dns.Fqdn(target), Qtype: qt, Qclass: uint16(qc)}
+
+	if !zeroID {
+		query.Id = dns.Id()
 	}
 
-	for _, answer := range r.Answer {
+	return query
+}
+
+// parse a DNS response (using the type of the underlying DNS package)
+// response: a DNS response to parse
+// @return:
+// result: a list of results and options (IPs or SOA or NSID records and such)
+func parseDNSResponse(response *dns.Msg) (result map[string][]string) {
+	result = make(map[string][]string)
+
+	for _, answer := range response.Answer {
 		switch t := answer.(type) {
 		case *dns.A:
-			if qt == dns.TypeA {
-				result["A"] = append(result["A"], t.A.String())
-			}
+			result["A"] = append(result["A"], t.A.String())
 		case *dns.AAAA:
-			if qt == dns.TypeAAAA {
-				result["AAAA"] = append(result["AAAA"], t.AAAA.String())
-			}
+			result["AAAA"] = append(result["AAAA"], t.AAAA.String())
 		case *dns.SOA:
-			if qt == dns.TypeSOA {
-				result["SOA"] = append(result["SOA"], fmt.Sprintf("%s %d", t.Ns, t.Serial))
-			}
+			result["SOA"] = append(result["SOA"], fmt.Sprintf("%s %d", t.Ns, t.Serial))
 		default:
 			util.Log("DNS", util.LevelFatal, "DNS", fmt.Sprintf("Don't know how to handle result type %v", t))
 			panic(1)
 		}
 	}
 
-	for _, answer := range r.Ns {
+	for _, answer := range response.Ns {
 		switch t := answer.(type) {
 		case *dns.NS:
-			if qt == dns.TypeNS {
-				result["NS"] = append(result["NS"], t.Ns)
-			}
+			result["NS"] = append(result["NS"], t.Ns)
 		}
 	}
 
-	if nsid {
-		for _, extra := range r.Extra {
-			// TODO find a way to extract NSID more elegantly than this hack
-			s := extra.String()
-			for _, line := range strings.Split(s, "\n") {
-				if strings.HasPrefix(line, "; NSID:") {
-					for _, token := range strings.Split(line, " ") {
-						if strings.HasPrefix(token, "(") {
-							s1 := strings.ReplaceAll(token, "(", "")
-							s2 := strings.ReplaceAll(s1, ")", "")
-							result["NSID"] = append(result["NSID"], s2)
-						}
+	for _, extra := range response.Extra {
+		// TODO find a way to extract NSID more elegantly than this hack
+		s := extra.String()
+		for _, line := range strings.Split(s, "\n") {
+			if strings.HasPrefix(line, "; NSID:") {
+				for _, token := range strings.Split(line, " ") {
+					if strings.HasPrefix(token, "(") {
+						s1 := strings.ReplaceAll(token, "(", "")
+						s2 := strings.ReplaceAll(s1, ")", "")
+						result["NSID"] = append(result["NSID"], s2)
 					}
 				}
 			}
 		}
 	}
 
-	stats := fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, r.Len())
-	util.Log(check, util.LevelDetail, "DNS_QUERY_STATS", stats)
-
-	return
+	return result
 }

@@ -1,5 +1,9 @@
 ## CHANGES
 
+0.4.20200927
+  * updated DoH checks to support RFC8484
+  * restructured the DNS measurement code to support the on-the-wire format needed for RFC8484
+
 0.4.20200925
   * added a report on how many entries were made in the log, per log level (detail, info, warning, ...)
   * added checks for DoH (DNS over HTTPS)

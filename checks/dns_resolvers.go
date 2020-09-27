@@ -71,7 +71,7 @@ func queryNameFromResolver(name string, resolver string) measurements.ResultCode
 	var err error
 
 	if !util.SkipIPv4() {
-		answersA, err = measurements.DNSQuery(checkName, name, "A", resolver, false, true)
+		answersA, err = measurements.DNSQuery(checkName, name, "A", resolver, false, true, true, false)
 		if err != nil {
 			util.Log(checkName, util.LevelError, "RESOLVER_ERROR_A", err.Error())
 			return measurements.ResultFailure
@@ -79,7 +79,7 @@ func queryNameFromResolver(name string, resolver string) measurements.ResultCode
 	}
 
 	if !util.SkipIPv6() {
-		answersAAAA, err = measurements.DNSQuery(checkName, name, "AAAA", resolver, false, true)
+		answersAAAA, err = measurements.DNSQuery(checkName, name, "AAAA", resolver, false, true, true, false)
 		if err != nil {
 			util.Log(checkName, util.LevelError, "RESOLVER_ERROR_AAAA", err.Error())
 			return measurements.ResultFailure

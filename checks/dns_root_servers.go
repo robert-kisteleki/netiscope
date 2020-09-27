@@ -96,7 +96,7 @@ func queryRootDNSServer(letter string, af string, server string) (results measur
 	// ask one server for a SOA record and check sanity of the result
 	util.Log(checkName, util.LevelInfo, "ROOT_DNS_SERVER_SOA_QUERY", fmt.Sprintf("Querying SOA record from %s-root server %s", letter, server))
 
-	answers, err := measurements.DNSQuery(checkName, ".", "SOA", server, true, false)
+	answers, err := measurements.DNSQuery(checkName, ".", "SOA", server, true, false, true, false)
 	if err != nil {
 		util.Log(checkName, util.LevelError, "ROOT_DNS_SERVER_SOA", err.Error())
 		results[measurements.ResultFailure]++
@@ -143,7 +143,7 @@ func queryRootDNSServer(letter string, af string, server string) (results measur
 	for _, tld := range tlds {
 		util.Log(checkName, util.LevelInfo, "ROOT_DNS_SERVER_TLD_QUERY", fmt.Sprintf("Querying TLD %s from %s-root server %s", tld, letter, server))
 
-		answers, err := measurements.DNSQuery(checkName, tld+".", "NS", server, true, false)
+		answers, err := measurements.DNSQuery(checkName, tld+".", "NS", server, true, false, true, false)
 		if err != nil {
 			util.Log(checkName, util.LevelError, "ROOT_DNS_SERVER_TLD", err.Error())
 			results[measurements.ResultFailure]++
@@ -184,7 +184,7 @@ func queryRootDNSServer(letter string, af string, server string) (results measur
 	for _, tld := range randomTLDs {
 		util.Log(checkName, util.LevelInfo, "ROOT_DNS_SERVER_RANDOM_QUERY", fmt.Sprintf("Querying TLD %s from %s-root server %s", tld, letter, server))
 
-		answers, err := measurements.DNSQuery(checkName, tld+".", "NS", server, true, false)
+		answers, err := measurements.DNSQuery(checkName, tld+".", "NS", server, true, false, true, false)
 		if err != nil {
 			util.Log(checkName, util.LevelDetail, "ROOT_DNS_SERVER_TLD_NXDOMAIN",
 				fmt.Sprintf("Random TLD lookup for %s failed as expected", tld),
