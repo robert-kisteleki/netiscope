@@ -6,7 +6,7 @@ import (
 
 	"netiscope/util"
 
-	"github.com/go-ping/ping"
+	probing "github.com/prometheus-community/pro-bing"
 )
 
 // Ping (duh) a specific target using our favourite library
@@ -20,24 +20,24 @@ func Ping(check string, target string, mnemo string) (results ResultCode) {
 	)
 
 	var packetloss float64
-	pinger, err := ping.NewPinger(target)
+	pinger, err := probing.NewPinger(target)
 	if err != nil {
 		panic(err)
 	}
 
-	pinger.OnRecv = func(pkt *ping.Packet) {
+	pinger.OnRecv = func(pkt *probing.Packet) {
 		util.Log(
 			check,
 			util.LevelDetail,
 			"PING_PACKET",
 			fmt.Sprintf(
 				"ping: %d bytes from %s: icmp_seq=%d time=%v ttl=%v",
-				pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.Ttl,
+				pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.TTL,
 			),
 		)
 	}
 
-	pinger.OnFinish = func(stats *ping.Statistics) {
+	pinger.OnFinish = func(stats *probing.Statistics) {
 		packetloss = stats.PacketLoss
 		util.Log(
 			check,
