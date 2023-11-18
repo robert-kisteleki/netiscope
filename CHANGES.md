@@ -1,5 +1,11 @@
 ## CHANGES
 
+0.5.20231118
+  * updated to go1.21
+  * updated packages
+  * replace (abandoned) go-ping with pro-bing
+  * updated CIDR ranges
+
 0.4.20200927
   * updated DoH checks to support RFC8484
   * restructured the DNS measurement code to support the on-the-wire format needed for RFC8484
