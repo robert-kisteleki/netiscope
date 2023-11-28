@@ -26,6 +26,7 @@ var (
 	flagForceIPv6 bool
 	flagLogLevel  string
 	flagVerbose   bool
+	flagRunCheck  string
 
 	// network interface check can signal if there were no routable addresses found
 	noUsableIPv4 bool
@@ -47,6 +48,7 @@ func SetupFlags() {
 	flag.BoolVar(&flagForceIPv6, "force6", false, "Force IPv6 checks even if no usable local IPv6 addresses are found")
 	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'. Default is 'info'.")
 	flag.BoolVar(&flagVerbose, "v", false, "Shorthand to set log level to 'detail'")
+	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
 
 	flag.Parse()
 
@@ -106,6 +108,9 @@ func ReadCIDRConfig() {
 
 // GetChecks loads the list of checks to be run from the ini file
 func GetChecks() []string {
+	if flagRunCheck != "" {
+		return []string{flagRunCheck}
+	}
 	return cfg.Section(flagSection).KeyStrings()
 }
 

@@ -52,6 +52,8 @@ func ExecuteChecks() {
 				}
 				wg.Done()
 			}(results)
+		} else {
+			log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "NO_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i])))
 		}
 	}
 	wg.Wait()
