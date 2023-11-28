@@ -1,4 +1,4 @@
-package measurements
+package checks
 
 // ResultCode to help enumerate outcomes of a measurement
 type ResultCode int

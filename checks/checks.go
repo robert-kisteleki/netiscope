@@ -1,8 +1,13 @@
 package checks
 
 import (
+	"fmt"
+	"netiscope/log"
 	"netiscope/util"
+	"sync"
 )
+
+type checkFunction func(log.Check)
 
 var (
 	// what checks are available
@@ -17,40 +22,46 @@ var (
 		"port_filtering":      CheckPortFiltering,
 		"doh_providers":       CheckDNSOverHTTPSProviders,
 	}
-	checkName string         // name of the currently running check
-	findings  []util.Finding // our findings
 )
-
-type checkFunction func()
 
 // ExecuteChecks runs all the defined checks
 func ExecuteChecks() {
 	checksToDo := util.GetChecks()
 
 	if len(checksToDo) == 0 {
-		util.Log("main", util.LevelFatal, "NO_CHECKS", "No checks defined")
+		fmt.Println("No checks defined")
 		return
 	}
 
+	var wg sync.WaitGroup
+	var m sync.Mutex
+	var counter []int = make([]int, 7)
 	for i := 0; i < len(checksToDo); i++ {
-		if !execute(checksToDo[i]) {
-			util.Log(
-				"main",
-				util.LevelFatal,
-				"NO_SUCH_CHECK",
-				"Unknown check '"+checksToDo[i],
-			)
+		checkFunction, found := knownChecks[checksToDo[i]]
+		if found {
+			results := make(chan log.ResultItem)
+			wg.Add(1)
+			check := log.Check{Name: checksToDo[i], Collector: results}
+			go checkFunction(check)
+			go func(c chan log.ResultItem) {
+				for v := range c {
+					m.Lock()
+					log.PrintResultItem(v)
+					counter[v.Level]++
+					m.Unlock()
+				}
+				wg.Done()
+			}(results)
 		}
 	}
-}
+	wg.Wait()
 
-// execute runs one check
-// @return boolean whether it was found and run
-func execute(check string) bool {
-	checkFunction, found := knownChecks[check]
-	if found {
-		checkName = check
-		checkFunction()
-	}
-	return found
+	summary := fmt.Sprintf(
+		"DETAIL=%d,INFO=%d,WARNING=%d,ERROR=%d",
+		counter[log.LevelDetail],
+		counter[log.LevelInfo],
+		counter[log.LevelWarning],
+		counter[log.LevelError],
+	)
+	log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "SUMMARY", summary))
 }

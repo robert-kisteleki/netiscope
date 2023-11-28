@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"netiscope/checks"
+	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -25,38 +26,25 @@ func main() {
 
 func reportNonStandardConfig() {
 	if util.SkipIPv4() {
-		util.Log(
-			"main",
-			util.LevelInfo,
-			"SKIP_IPV4",
-			"IPv4 checks are disabled",
+		log.PrintResultItem(
+			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled\n"),
 		)
 	}
 	if util.SkipIPv6() {
-		util.Log(
-			"main",
-			util.LevelInfo,
-			"SKIP_IPV6",
-			"IPv6 checks are disabled",
+		log.PrintResultItem(
+			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled\n"),
 		)
 	}
 }
 
 func start() {
-	util.Log(
-		"main",
-		util.LevelInfo,
-		"START",
-		fmt.Sprintf("Started (version %s)", util.Version),
+	log.PrintResultItem(
+		log.NewFinding("main", log.LevelAdmin, "START", fmt.Sprintf("Started (version %s)", util.Version)),
 	)
 }
 
 func finish() {
-	util.ReportLogTotals()
-	util.Log(
-		"main",
-		util.LevelInfo,
-		"FINISH",
-		"Finished",
+	log.PrintResultItem(
+		log.NewFinding("main", log.LevelAdmin, "FINISH", "Finished"),
 	)
 }

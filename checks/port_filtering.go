@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"netiscope/log"
 	"netiscope/util"
 	"strings"
 	"time"
@@ -12,13 +13,14 @@ import (
 const expectedReply = "Netiscope\n"
 
 // CheckPortFiltering checks if outgoing connections to various ports are allowed or not
-func CheckPortFiltering() {
+func CheckPortFiltering(check log.Check) {
+	defer close(check.Collector)
 
 	targets := util.GetTargetsToPortCheck()
 	for _, target := range targets {
 		for _, af := range [2]string{"4", "6"} {
 			if (af == "4" && !util.SkipIPv4()) || (af == "6" && !util.SkipIPv6()) {
-				util.Log(checkName, util.LevelDetail, "PORT_FILTER_IPV"+af+"_DIAL",
+				log.NewResultItem(check, log.LevelDetail, "PORT_FILTER_IPV"+af+"_DIAL",
 					fmt.Sprintf("Connecting to %s:%s on IPv"+af+" %s", target[0], target[1], target[2]),
 				)
 
@@ -29,14 +31,14 @@ func CheckPortFiltering() {
 					time.Duration(util.GetPortFilteringTimeout())*time.Second,
 				)
 				if err != nil {
-					util.Log(checkName, util.LevelError, "PORT_FILTER_IPV"+af+"_DIAL_ERROR",
+					log.NewResultItem(check, log.LevelError, "PORT_FILTER_IPV"+af+"_DIAL_ERROR",
 						fmt.Sprintf("Error connecting to %s:%s on IPv"+af+" %s: %v", target[0], target[1], target[2], err),
 					)
 					continue
 				}
 
 				// connection succesful
-				util.Log(checkName, util.LevelInfo, "PORT_FILTER_IPV"+af+"_CONN_OK",
+				log.NewResultItem(check, log.LevelInfo, "PORT_FILTER_IPV"+af+"_CONN_OK",
 					fmt.Sprintf("Connection to %s:%s (%v) was successful on IPv"+af+" %s",
 						target[0],
 						target[1],
@@ -50,7 +52,7 @@ func CheckPortFiltering() {
 				fmt.Fprintf(conn, "Netiscope v%s\n", util.Version)
 				reply, err := bufio.NewReader(conn).ReadString('\n')
 				if err != nil {
-					util.Log(checkName, util.LevelError, "PORT_FILTER_IPV"+af+"_READ_ERROR",
+					log.NewResultItem(check, log.LevelError, "PORT_FILTER_IPV"+af+"_READ_ERROR",
 						fmt.Sprintf("Error reading from %s:%s on IPv"+af+" %s: %v", target[0], target[1], target[2], err),
 					)
 					continue
@@ -59,11 +61,11 @@ func CheckPortFiltering() {
 				// reply check, if enabled
 				if util.CheckPortFilteringResponse() {
 					if reply == expectedReply {
-						util.Log(checkName, util.LevelInfo, "PORT_FILTER_IPV"+af+"_RESPONSE_GOOD",
+						log.NewResultItem(check, log.LevelInfo, "PORT_FILTER_IPV"+af+"_RESPONSE_GOOD",
 							fmt.Sprintf("Got the expected reply from %s:%s on IPv"+af+" %s", target[0], target[1], target[2]),
 						)
 					} else {
-						util.Log(checkName, util.LevelError, "PORT_FILTER_IPV"+af+"_RESPONSE_WRONG",
+						log.NewResultItem(check, log.LevelError, "PORT_FILTER_IPV"+af+"_RESPONSE_WRONG",
 							fmt.Sprintf("Got unexpected reply from %s:%s on IPv"+af+" %s: %+q",
 								target[0],
 								target[1],

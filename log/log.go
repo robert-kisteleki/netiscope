@@ -1,13 +1,25 @@
-package util
+package log
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fatih/color"
 )
+
+// parse log level as a string and set log level accordingly
+func SetLogLevel(level string) {
+	switch level {
+	case "detail":
+		LogLevel = LevelDetail
+	case "info":
+		LogLevel = LevelInfo
+	case "warning":
+		LogLevel = LevelWarning
+	case "error":
+		LogLevel = LevelError
+	}
+}
 
 // LogLevelType defines severity of log messages
 type LogLevelType int
@@ -20,17 +32,11 @@ const (
 	LevelError   = 3
 	LevelFatal   = 4
 	LevelTodo    = 5
+	LevelAdmin   = 6
 )
 
 // LogLevel defines what should be loggged
 var LogLevel = LevelInfo // by default: info or above are reported
-
-// count the number of log entries
-var logEntryNumbers map[LogLevelType]int
-
-func init() {
-	logEntryNumbers = make(map[LogLevelType]int)
-}
 
 // Name returns the human readable name of a loglevel
 func (l LogLevelType) String() string {
@@ -41,6 +47,7 @@ func (l LogLevelType) String() string {
 		LevelError:   "ERROR",
 		LevelFatal:   "FATAL",
 		LevelTodo:    "TODO",
+		LevelAdmin:   "ADMIN",
 	}
 	return logLevelNames[l]
 }
@@ -58,69 +65,53 @@ func (l LogLevelType) Color() color.Attribute {
 	return logLevelColors[l]
 }
 
-// Finding describes one finding/observation
-type Finding struct {
-	Timestamp string       `json:"timestamp"`
+// ResultItem describes one finding/observation
+type ResultItem struct {
 	Check     string       `json:"check"`
 	Level     LogLevelType `json:"level"`
 	Mnemonic  string       `json:"mnemonic"`
-	Details   interface{}  `json:"details"`
+	Details   string       `json:"details"`
+	Timestamp string       `json:"timestamp"`
 }
 
-var findings []Finding
+type Check struct {
+	Name      string
+	Collector chan ResultItem
+}
 
-// Log logs one finding
-func Log(check string, level LogLevelType, mnemonic string, details ...interface{}) {
+// NewFinding logs one finding
+func NewFinding(check string, level LogLevelType, mnemonic string, details string) ResultItem {
 	now := time.Now().Format(time.RFC3339)
-
-	if (level == LevelFatal) || (level == LevelTodo) ||
-		(level == LevelError && LogLevel <= 3) ||
-		(level == LevelWarning && LogLevel <= 2) ||
-		(level == LevelInfo && LogLevel <= 1) ||
-		(level == LevelDetail && LogLevel == 0) {
-
-		logEntryNumbers[level]++
-
-		if ColoredOutput() {
-			color.Set(level.Color())
-			defer color.Unset()
-		}
-
-		fmt.Print(now)
-		fmt.Printf("\t%s", check)
-		fmt.Printf("\t%s", level.String())
-		fmt.Printf("\t%s", mnemonic)
-		if details != nil {
-			encoded, _ := json.Marshal(details)
-			fmt.Printf("\t%s", string(encoded))
-		}
-		fmt.Println()
-	}
-
-	addFinding(now, check, level, mnemonic, details)
-}
-
-// ReportLogTotals reports on (logs) the number of log entries received per level
-func ReportLogTotals() {
-	var entries []string
-	for _, level := range []LogLevelType{LevelDetail, LevelInfo, LevelWarning, LevelError, LevelFatal, LevelTodo} {
-		if logEntryNumbers[level] != 0 {
-			entries = append(entries, fmt.Sprintf("%s=%d", level.String(), logEntryNumbers[level]))
-		}
-	}
-	Log("main", LevelInfo, "REPORT", strings.Join(entries, ","))
-}
-
-// AddFinding is a shorthand to add a net Detail to the list
-func addFinding(now string, check string, level LogLevelType, mnemonic string, details interface{}) {
-	newFinding := Finding{
+	return ResultItem{
 		Timestamp: now,
 		Check:     check,
 		Level:     level,
 		Mnemonic:  mnemonic,
 		Details:   details,
 	}
-	findings = append(findings, newFinding)
+}
+
+func NewResultItem(check Check, level LogLevelType, mnemonic string, details string) {
+	check.Collector <- NewFinding(check.Name, level, mnemonic, details)
+}
+
+func PrintResultItem(finding ResultItem) {
+	level := finding.Level
+	if (level == LevelFatal) || (level == LevelTodo) || (level == LevelAdmin) ||
+		(level == LevelError && LogLevel <= 3) ||
+		(level == LevelWarning && LogLevel <= 2) ||
+		(level == LevelInfo && LogLevel <= 1) ||
+		(level == LevelDetail && LogLevel == 0) {
+
+		fmt.Print(finding.Timestamp)
+		fmt.Printf("\t%s", finding.Check)
+		fmt.Printf("\t%s", level.String())
+		fmt.Printf("\t%s", finding.Mnemonic)
+		if finding.Details != "" {
+			fmt.Printf("\t%s", finding.Details)
+		}
+		fmt.Println()
+	}
 }
 
 // DurationToHuman produces a humanised string version of a Duration
@@ -135,16 +126,10 @@ func DurationToHuman(duration time.Duration) string {
 	second := duration / time.Second
 	switch {
 	case day > 0:
-		{
-			return fmt.Sprintf("%dd %dh %dm %ds", day, hour, minute, second)
-		}
+		return fmt.Sprintf("%dd %dh %dm %ds", day, hour, minute, second)
 	case hour > 0:
-		{
-			return fmt.Sprintf("%dh %dm %ds", hour, minute, second)
-		}
+		return fmt.Sprintf("%dh %dm %ds", hour, minute, second)
 	default:
-		{
-			return fmt.Sprintf("%dm %ds", minute, second)
-		}
+		return fmt.Sprintf("%dm %ds", minute, second)
 	}
 }

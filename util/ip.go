@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"net"
+	"netiscope/log"
 	"strings"
 )
 
@@ -102,28 +103,26 @@ func isIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
 }
 
 // CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
-func CheckIPForProvider(checkName string, ip string, provider string) {
+func CheckIPForProvider(
+	check log.Check,
+	ip string,
+	provider string,
+) {
 	known, contains := isIPInProviderCIDRBlock(ip, provider)
 	switch {
 	case !known:
-		Log(
-			checkName,
-			LevelDetail,
-			"PROVIDER_CIDR_UNKNOWN",
-			fmt.Sprintf("CIDR block list is unknown for %s", provider),
+		log.NewResultItem(
+			check, log.LevelDetail, "PROVIDER_CIDR_UNKNOWN",
+			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
 		)
 	case known && contains:
-		Log(
-			checkName,
-			LevelInfo,
-			"PROVIDER_CIDR_OK",
+		log.NewResultItem(
+			check, log.LevelInfo, "PROVIDER_CIDR_OK",
 			fmt.Sprintf("The IP %s is in the CIDR block list for %s", ip, provider),
 		)
 	case known && !contains:
-		Log(
-			checkName,
-			LevelError,
-			"PROVIDER_CIDR_NOT_OK",
+		log.NewResultItem(
+			check, log.LevelError, "PROVIDER_CIDR_NOT_OK",
 			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
 		)
 	}

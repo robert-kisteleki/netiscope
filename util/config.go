@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"netiscope/log"
 	"os"
 	"strings"
 
@@ -25,7 +26,6 @@ var (
 	flagForceIPv6 bool
 	flagLogLevel  string
 	flagVerbose   bool
-	flagColor     bool
 
 	// network interface check can signal if there were no routable addresses found
 	noUsableIPv4 bool
@@ -47,13 +47,12 @@ func SetupFlags() {
 	flag.BoolVar(&flagForceIPv6, "force6", false, "Force IPv6 checks even if no usable local IPv6 addresses are found")
 	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'. Default is 'info'.")
 	flag.BoolVar(&flagVerbose, "v", false, "Shorthand to set log level to 'detail'")
-	flag.BoolVar(&flagColor, "color", false, "Enable colored output")
 
 	flag.Parse()
 
-	setLogLevel(flagLogLevel)
+	log.SetLogLevel(flagLogLevel)
 	if flagVerbose {
-		LogLevel = LevelDetail // verbose means detail
+		log.LogLevel = log.LevelDetail // verbose means detail
 	}
 }
 
@@ -64,7 +63,7 @@ func ReadConfig() {
 	)
 	// config as argument is tried first
 	if confFile == "" {
-		Log("main", LevelFatal, "CONFIG_FLAG", "Failed to find main config file")
+		fmt.Fprintf(os.Stderr, "Failed to find main config file")
 		os.Exit(1)
 	}
 
@@ -74,12 +73,11 @@ func ReadConfig() {
 		confFile,
 	)
 	if err != nil {
-		Log("main", LevelFatal, "CONFIG_FLAG", fmt.Sprintf("Failed to read main config file: %v", err))
+		fmt.Fprintf(os.Stderr, "Failed to read main config file: %v", err)
 		os.Exit(1)
 	}
-	Log("main", LevelDetail, "CONFIG_FLAG", "Reading config file "+confFile)
 
-	setLogLevel(cfg.Section("main").Key("loglevel").MustString(""))
+	log.SetLogLevel(cfg.Section("main").Key("loglevel").MustString(""))
 }
 
 // ReadCIDRConfig deals with CIDR list loading
@@ -89,7 +87,7 @@ func ReadCIDRConfig() {
 	)
 	// config as argument is tried first
 	if confFile == "" {
-		Log("main", LevelWarning, "CONFIG_FLAG", "Failed to find CIDR config file")
+		fmt.Fprintf(os.Stderr, "Failed to find CIDR config file")
 		return
 	}
 
@@ -99,10 +97,9 @@ func ReadCIDRConfig() {
 		confFile,
 	)
 	if err != nil {
-		Log("main", LevelWarning, "CONFIG_FLAG", fmt.Sprintf("Failed to read CIDR config file: %v", err))
+		fmt.Fprintf(os.Stderr, "Failed to read CIDR config file: %v", err)
 		return
 	}
-	Log("main", LevelDetail, "CONFIG_FLAG", "Reading CIDR config file "+confFile)
 
 	loadProviderCIDRBlocks()
 }
@@ -130,11 +127,6 @@ func SkipIPv6() bool {
 // GetPingCount returns how many ping packets should be sent
 func GetPingCount() int {
 	return cfg.Section("main").Key("ping_packets").MustInt(3)
-}
-
-// ColoredOutput determines if the (terminal) output can use ANSI coloring or nor
-func ColoredOutput() bool {
-	return flagColor || (cfg != nil && cfg.Section("main").Key("color").MustBool(false))
 }
 
 // GetDNSNamesToLookup returns the list of FQDNs to look up with DNS resolvers
@@ -168,7 +160,7 @@ func loadProviderCIDRBlocks() {
 func SetFailedIPv4() {
 	noUsableIPv4 = true
 	if flagForceIPv4 {
-		Log("main", LevelWarning, "FORCE_IPV4", "IPv4 check are forced by configuration")
+		fmt.Fprintf(os.Stderr, "IPv4 check are forced by configuration")
 	}
 }
 
@@ -176,7 +168,7 @@ func SetFailedIPv4() {
 func SetFailedIPv6() {
 	noUsableIPv6 = true
 	if flagForceIPv6 {
-		Log("main", LevelWarning, "FORCE_IPV6", "IPv6 check are forced by configuration")
+		fmt.Fprintf(os.Stderr, "IPv6 check are forced by configuration")
 	}
 }
 
@@ -213,20 +205,6 @@ func whichFile(candidates []string) string {
 		return file
 	}
 	return ""
-}
-
-// parse log level as a string and set log level accordingly
-func setLogLevel(level string) {
-	switch level {
-	case "detail":
-		LogLevel = LevelDetail
-	case "info":
-		LogLevel = LevelInfo
-	case "warning":
-		LogLevel = LevelWarning
-	case "error":
-		LogLevel = LevelError
-	}
 }
 
 // split entries in a a section/key list at the "," separator

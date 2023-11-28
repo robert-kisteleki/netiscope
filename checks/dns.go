@@ -1,9 +1,9 @@
-package measurements
+package checks
 
 import (
 	"fmt"
 	"net"
-	"netiscope/util"
+	"netiscope/log"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -26,7 +26,7 @@ import (
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // dnserror: code upon error
 func DNSQuery(
-	check string,
+	check log.Check,
 	target string,
 	qType string,
 	server string,
@@ -41,7 +41,7 @@ func DNSQuery(
 	dnserror = nil
 	server = net.JoinHostPort(server, "53")
 
-	query := prepareDNSQuery(target, qType, nsid, rd, do, zeroID)
+	query := prepareDNSQuery(check, target, qType, nsid, rd, do, zeroID)
 
 	c := new(dns.Client)
 	c.Net = "udp"
@@ -60,10 +60,10 @@ func DNSQuery(
 		return
 	}
 
-	result = parseDNSResponse(response)
+	result = parseDNSResponse(check, response)
 
 	stats := fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, response.Len())
-	util.Log(check, util.LevelDetail, "DNS_QUERY_STATS", stats)
+	log.NewResultItem(check, log.LevelDetail, "DNS_QUERY_STATS", stats)
 
 	return
 }
@@ -77,6 +77,7 @@ func DNSQuery(
 // zeroID: use zero as query ID?
 // @return: an assembled DNS query in on-the-wire format
 func CreateDNSQuery(
+	check log.Check,
 	target string,
 	qType string,
 	nsid bool,
@@ -85,7 +86,7 @@ func CreateDNSQuery(
 	zeroID bool,
 ) []byte {
 
-	query := prepareDNSQuery(target, qType, nsid, rd, do, zeroID)
+	query := prepareDNSQuery(check, target, qType, nsid, rd, do, zeroID)
 	buf, _ := query.Pack()
 
 	return buf
@@ -96,14 +97,17 @@ func CreateDNSQuery(
 // @return:
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // error code upon error
-func ParseDNSResponse(responseBytes []byte) (result map[string][]string, err error) {
+func ParseDNSResponse(
+	check log.Check,
+	responseBytes []byte,
+) (result map[string][]string, err error) {
 	var response dns.Msg
 	err = response.Unpack(responseBytes)
 	if err != nil {
 		return
 	}
 
-	result = parseDNSResponse(&response)
+	result = parseDNSResponse(check, &response)
 	return
 }
 
@@ -116,6 +120,7 @@ func ParseDNSResponse(responseBytes []byte) (result map[string][]string, err err
 // zeroID: use zero as query ID?
 // @return: the DNS query (using the type of the underlying DNS package)
 func prepareDNSQuery(
+	check log.Check,
 	target string,
 	qType string,
 	nsid bool,
@@ -147,7 +152,7 @@ func prepareDNSQuery(
 	case "NS":
 		qt = dns.TypeNS
 	default:
-		util.Log("DNS", util.LevelFatal, "DNS", fmt.Sprintf("Don't know how to query DNS for %s", qType))
+		log.NewResultItem(check, log.LevelFatal, "DNS", fmt.Sprintf("Don't know how to query DNS for %s", qType))
 		panic(1)
 	}
 
@@ -180,7 +185,10 @@ func prepareDNSQuery(
 // response: a DNS response to parse
 // @return:
 // result: a list of results and options (IPs or SOA or NSID records and such)
-func parseDNSResponse(response *dns.Msg) (result map[string][]string) {
+func parseDNSResponse(
+	check log.Check,
+	response *dns.Msg,
+) (result map[string][]string) {
 	result = make(map[string][]string)
 
 	for _, answer := range response.Answer {
@@ -192,7 +200,7 @@ func parseDNSResponse(response *dns.Msg) (result map[string][]string) {
 		case *dns.SOA:
 			result["SOA"] = append(result["SOA"], fmt.Sprintf("%s %d", t.Ns, t.Serial))
 		default:
-			util.Log("DNS", util.LevelFatal, "DNS", fmt.Sprintf("Don't know how to handle result type %v", t))
+			log.NewResultItem(check, log.LevelFatal, "DNS", fmt.Sprintf("Don't know how to handle result type %v", t))
 			panic(1)
 		}
 	}
