@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"netiscope/log"
 	"netiscope/util"
+	"os"
+	"sort"
+	"strings"
 	"sync"
 )
 
@@ -34,36 +37,68 @@ func ExecuteChecks() {
 	}
 
 	var wg sync.WaitGroup
-	var m sync.Mutex
-	var counter []int = make([]int, 7)
+	var mutexr, mutext sync.Mutex
+	levelCounter := make([]int, 7)
+	checkCounter := make(map[string]int)
 	for i := 0; i < len(checksToDo); i++ {
-		checkFunction, found := knownChecks[checksToDo[i]]
+		checkName := checksToDo[i]
+		checkFunction, found := knownChecks[checkName]
 		if found {
 			results := make(chan log.ResultItem)
+			tracker := make(chan string)
 			wg.Add(1)
-			check := log.Check{Name: checksToDo[i], Collector: results}
+			check := log.Check{Name: checkName, Collector: results, Tracker: tracker}
 			go checkFunction(check)
 			go func(c chan log.ResultItem) {
 				for v := range c {
-					m.Lock()
+					mutexr.Lock()
 					log.PrintResultItem(v)
-					counter[v.Level]++
-					m.Unlock()
+					levelCounter[v.Level]++
+					mutexr.Unlock()
 				}
 				wg.Done()
 			}(results)
+			go func(c chan string) {
+				for check := range c {
+					mutext.Lock()
+					checkCounter[check]++
+					showProgress(levelCounter, checkCounter)
+					mutext.Unlock()
+				}
+			}(tracker)
 		} else {
 			log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "NO_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i])))
 		}
 	}
 	wg.Wait()
 
+	fmt.Println()
 	summary := fmt.Sprintf(
 		"DETAIL=%d,INFO=%d,WARNING=%d,ERROR=%d",
-		counter[log.LevelDetail],
-		counter[log.LevelInfo],
-		counter[log.LevelWarning],
-		counter[log.LevelError],
+		levelCounter[log.LevelDetail],
+		levelCounter[log.LevelInfo],
+		levelCounter[log.LevelWarning],
+		levelCounter[log.LevelError],
 	)
 	log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "SUMMARY", summary))
+}
+
+func showProgress(levels []int, tracks map[string]int) {
+	if !util.Verbose() {
+		return
+	}
+	fmt.Fprint(os.Stderr, "\r")
+	for i := 0; i < 4; i++ {
+		fmt.Fprintf(os.Stderr, "%s=%d ", log.LogLevelType(i), levels[i])
+	}
+	keys := make([]string, 0, len(tracks))
+	for k := range tracks {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	progress := []string{}
+	for _, key := range keys {
+		progress = append(progress, fmt.Sprintf("%d", tracks[key]))
+	}
+	fmt.Fprintf(os.Stderr, "PROGRESS=%s", strings.Join(progress, "/"))
 }

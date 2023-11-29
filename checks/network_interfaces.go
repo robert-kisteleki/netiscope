@@ -66,6 +66,8 @@ func evaluateIPv4NetworkAddress(
 	ip, _, _ := net.ParseCIDR(addr.String())
 	ipstring := ip.String()
 
+	log.Track(check)
+
 	// IPv4 routable?
 	if !util.SkipIPv4() && ip.IsGlobalUnicast() {
 		if util.IsIPv4NAT(ipstring) {
@@ -116,6 +118,8 @@ func evaluateIPv6NetworkAddress(
 ) bool {
 	ip, _, _ := net.ParseCIDR(addr.String())
 	ipstring := ip.String()
+
+	log.Track(check)
 
 	// IPv6 routable?
 	if !util.SkipIPv6() && ip.IsGlobalUnicast() && !util.IsIPv6ULA(ipstring) {

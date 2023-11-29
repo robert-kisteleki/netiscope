@@ -34,6 +34,7 @@ func CheckPortFiltering(check log.Check) {
 					log.NewResultItem(check, log.LevelError, "PORT_FILTER_IPV"+af+"_DIAL_ERROR",
 						fmt.Sprintf("Error connecting to %s:%s on IPv"+af+" %s: %v", target[0], target[1], target[2], err),
 					)
+					log.Track(check)
 					continue
 				}
 
@@ -55,6 +56,7 @@ func CheckPortFiltering(check log.Check) {
 					log.NewResultItem(check, log.LevelError, "PORT_FILTER_IPV"+af+"_READ_ERROR",
 						fmt.Sprintf("Error reading from %s:%s on IPv"+af+" %s: %v", target[0], target[1], target[2], err),
 					)
+					log.Track(check)
 					continue
 				}
 
@@ -75,6 +77,7 @@ func CheckPortFiltering(check log.Check) {
 						)
 					}
 				}
+				log.Track(check)
 			}
 		}
 	}

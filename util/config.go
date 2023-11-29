@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"netiscope/log"
 	"os"
 	"strings"
 
@@ -46,16 +45,11 @@ func SetupFlags() {
 	flag.BoolVar(&flagSkipIPv6, "skip6", false, "Skip IPv6 checks")
 	flag.BoolVar(&flagForceIPv4, "force4", false, "Force IPv4 checks even if no usable local IPv4 addresses are found")
 	flag.BoolVar(&flagForceIPv6, "force6", false, "Force IPv6 checks even if no usable local IPv6 addresses are found")
-	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'. Default is 'info'.")
-	flag.BoolVar(&flagVerbose, "v", false, "Shorthand to set log level to 'detail'")
+	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'")
+	flag.BoolVar(&flagVerbose, "v", false, "Be verbose reporting progress")
 	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
 
 	flag.Parse()
-
-	log.SetLogLevel(flagLogLevel)
-	if flagVerbose {
-		log.LogLevel = log.LevelDetail // verbose means detail
-	}
 }
 
 // ReadConfig deals with main configuration file loading
@@ -78,8 +72,6 @@ func ReadConfig() {
 		fmt.Fprintf(os.Stderr, "Failed to read main config file: %v", err)
 		os.Exit(1)
 	}
-
-	log.SetLogLevel(cfg.Section("main").Key("loglevel").MustString(""))
 }
 
 // ReadCIDRConfig deals with CIDR list loading
@@ -197,6 +189,10 @@ func GetDoHProviders() [][]string {
 	return splitConfigKeyList("doh", "provider")
 }
 
+func Verbose() bool {
+	return flagVerbose
+}
+
 // check which file exists, from a list of candidates in order of preference
 func whichFile(candidates []string) string {
 	for _, file := range candidates {
@@ -220,4 +216,12 @@ func splitConfigKeyList(section string, key string) [][]string {
 		splitList = append(splitList, strings.Split(item, ","))
 	}
 	return splitList
+}
+
+func GetLogLevel() string {
+	if flagLogLevel != "" {
+		return flagLogLevel
+	} else {
+		return cfg.Section("main").Key("loglevel").MustString("")
+	}
 }

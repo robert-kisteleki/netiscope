@@ -3,7 +3,6 @@ module netiscope
 go 1.21
 
 require (
-	github.com/fatih/color v1.16.0
 	github.com/go-ini/ini v1.67.0
 	github.com/miekg/dns v1.1.57
 	github.com/prometheus-community/pro-bing v0.3.0
@@ -11,8 +10,6 @@ require (
 
 require (
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.17.0 // indirect

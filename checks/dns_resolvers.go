@@ -25,6 +25,7 @@ func queryNamesFromResolvers(
 			fmt.Sprintf("%s_NO_NAMES", strings.ToUpper(rtype)),
 			"The list of names to look up is empty",
 		)
+		log.Track(check)
 		return
 	}
 
@@ -34,6 +35,7 @@ func queryNamesFromResolvers(
 		var resolverResults MultipleResult
 		for _, name := range names {
 			resolverResults[queryNameFromResolver(check, name, resolver)]++
+			log.Track(check)
 		}
 
 		// now evaluate this resolver by looking at the the collected results
@@ -64,6 +66,7 @@ func queryNamesFromResolvers(
 				fmt.Sprintf("Resolver %s answered all queries", resolver),
 			)
 		}
+		log.Track(check)
 	}
 	return
 }
@@ -116,6 +119,7 @@ func queryNameFromResolver(
 	// verify if answers are in predefined known CIDR ranges
 	for _, ip := range answers {
 		util.CheckIPForProvider(check, fmt.Sprint(ip), name)
+		log.Track(check)
 	}
 
 	return ResultSuccess
@@ -138,12 +142,14 @@ func testResolversOnAddressFamily(
 			check, mnemo, af, kind, "PING", "reachable", resolvers,
 			PingServers(check, mnemo, resolvers),
 		)
+		log.Track(check)
 	}
 	if shouldCheckDNSFunction("query") {
 		reportResolversOnAddressFamily(
 			check, mnemo, af, kind, "QUERY", "answering", resolvers,
 			queryNamesFromResolvers(check, mnemo, resolvers),
 		)
+		log.Track(check)
 	}
 }
 
@@ -175,16 +181,19 @@ func reportResolversOnAddressFamily(
 			fmt.Sprintf("%s_%s_OK", test, mnemo),
 			fmt.Sprintf("%s %s %v %s %s properly", af, kind, resolvers, isare, verb),
 		)
+		log.Track(check)
 	case out[ResultPartial] > 0:
 		log.NewResultItem(check, log.LevelWarning,
 			fmt.Sprintf("%s_%s_PARTIAL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s only partially %s", af, kind, resolvers, isare, verb),
 		)
+		log.Track(check)
 	default:
 		log.NewResultItem(check, log.LevelError,
 			fmt.Sprintf("%s_%s_FAIL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s not %s properly", af, kind, resolvers, isare, verb),
 		)
+		log.Track(check)
 	}
 }
 

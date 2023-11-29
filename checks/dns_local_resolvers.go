@@ -43,6 +43,7 @@ func loadResolvers(check log.Check) bool {
 	if err != nil {
 		return false
 	}
+	log.Track(check)
 	log.NewResultItem(
 		check, log.LevelInfo, "RESOLVCONF_DATE",
 		fmt.Sprintf("resolv.conf was last modified %s ago (at %s)",
@@ -76,6 +77,7 @@ func loadResolvers(check log.Check) bool {
 		log.NewResultItem(check, log.LevelInfo, "LOCAL_DNS_RESOLVERS", fmt.Sprintf("IPv6 resolvers: %s", rcResolversV6))
 	}
 	log.NewResultItem(check, log.LevelInfo, "SEARCH", fmt.Sprintf("Search path: %s", rcSearch))
+	log.Track(check)
 
 	return true
 }
@@ -87,6 +89,7 @@ func testLocalResolvers(check log.Check) {
 			testResolversOnAddressFamily(check, "LOCAL_DNS_RESOLVER", "IPv4", "local DNS resolvers", rcResolversV4)
 		} else {
 			log.NewResultItem(check, log.LevelError, "NO_LOCAL_IPV4_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
+			log.Track(check)
 		}
 	}
 
@@ -95,6 +98,7 @@ func testLocalResolvers(check log.Check) {
 			testResolversOnAddressFamily(check, "LOCAL_DNS_RESOLVER", "IPv6", "local DNS resolvers", rcResolversV6)
 		} else {
 			log.NewResultItem(check, log.LevelError, "NO_LOCAL_IPV6_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
+			log.Track(check)
 		}
 	}
 }

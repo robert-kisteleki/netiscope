@@ -1,5 +1,11 @@
 ## CHANGES
 
+next
+  * CHANGED: run checks asynchronously
+  * CHANGED: b-root changed IP addresses
+  * NEW: run a specific test only
+  * NEW: show progress in verbose mode
+
 0.5.20231118
   * updated to go1.21
   * updated packages

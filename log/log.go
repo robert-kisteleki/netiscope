@@ -3,12 +3,10 @@ package log
 import (
 	"fmt"
 	"time"
-
-	"github.com/fatih/color"
 )
 
 // parse log level as a string and set log level accordingly
-func SetLogLevel(level string) {
+func SetLogLevel(level string, setverbose bool) {
 	switch level {
 	case "detail":
 		LogLevel = LevelDetail
@@ -19,6 +17,7 @@ func SetLogLevel(level string) {
 	case "error":
 		LogLevel = LevelError
 	}
+	verbose = setverbose
 }
 
 // LogLevelType defines severity of log messages
@@ -37,6 +36,7 @@ const (
 
 // LogLevel defines what should be loggged
 var LogLevel = LevelInfo // by default: info or above are reported
+var verbose bool
 
 // Name returns the human readable name of a loglevel
 func (l LogLevelType) String() string {
@@ -52,19 +52,6 @@ func (l LogLevelType) String() string {
 	return logLevelNames[l]
 }
 
-// Color returns the assigned (terminal) color of a loglevel
-func (l LogLevelType) Color() color.Attribute {
-	var logLevelColors = map[LogLevelType]color.Attribute{
-		LevelDetail:  color.FgBlue,
-		LevelInfo:    color.FgGreen,
-		LevelWarning: color.FgHiYellow,
-		LevelError:   color.FgRed,
-		LevelFatal:   color.FgMagenta,
-		LevelTodo:    color.FgCyan,
-	}
-	return logLevelColors[l]
-}
-
 // ResultItem describes one finding/observation
 type ResultItem struct {
 	Check     string       `json:"check"`
@@ -77,6 +64,7 @@ type ResultItem struct {
 type Check struct {
 	Name      string
 	Collector chan ResultItem
+	Tracker   chan string
 }
 
 // NewFinding logs one finding
@@ -97,7 +85,8 @@ func NewResultItem(check Check, level LogLevelType, mnemonic string, details str
 
 func PrintResultItem(finding ResultItem) {
 	level := finding.Level
-	if (level == LevelFatal) || (level == LevelTodo) || (level == LevelAdmin) ||
+	if (level == LevelFatal) || (level == LevelTodo) ||
+		(level == LevelAdmin && verbose) ||
 		(level == LevelError && LogLevel <= 3) ||
 		(level == LevelWarning && LogLevel <= 2) ||
 		(level == LevelInfo && LogLevel <= 1) ||
@@ -132,4 +121,8 @@ func DurationToHuman(duration time.Duration) string {
 	default:
 		return fmt.Sprintf("%dm %ds", minute, second)
 	}
+}
+
+func Track(check Check) {
+	check.Tracker <- check.Name
 }

@@ -18,6 +18,7 @@ func main() {
 	util.SetupFlags()
 	util.ReadConfig()
 	util.ReadCIDRConfig()
+	log.SetLogLevel(util.GetLogLevel(), util.Verbose())
 	reportNonStandardConfig()
 	start()
 	checks.ExecuteChecks()

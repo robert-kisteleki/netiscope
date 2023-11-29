@@ -41,6 +41,7 @@ func CheckDNSOverHTTPSProviders(check log.Check) {
 					fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s", af),
 					fmt.Sprintf("Checking for name %s via %s (format: %s) using IPv%s", name, pbase, format, af),
 				)
+				log.Track(check)
 
 				// do A over IPv4 and AAAA over IPv6, which is not perfect but reasonable
 				qtype := "A"
