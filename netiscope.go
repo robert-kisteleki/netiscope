@@ -28,12 +28,12 @@ func main() {
 func reportNonStandardConfig() {
 	if util.SkipIPv4() {
 		log.PrintResultItem(
-			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled\n"),
+			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled"),
 		)
 	}
 	if util.SkipIPv6() {
 		log.PrintResultItem(
-			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled\n"),
+			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled"),
 		)
 	}
 }

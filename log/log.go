@@ -91,8 +91,8 @@ func PrintResultItem(finding ResultItem) {
 		(level == LevelDetail && LogLevel == 0) {
 
 		fmt.Print(finding.Timestamp)
-		fmt.Printf("\t%s", finding.Check)
 		fmt.Printf("\t%s", level.String())
+		fmt.Printf("\t%s", finding.Check)
 		fmt.Printf("\t%s", finding.Mnemonic)
 		if finding.Details != "" {
 			fmt.Printf("\t%s", finding.Details)
