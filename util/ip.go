@@ -2,42 +2,32 @@ package util
 
 import (
 	"fmt"
+	"math/big"
 	"net"
 	"netiscope/log"
 	"strings"
 )
 
-// well-known CIDR blocks
 var (
-	cidrIPv4NAT        []net.IPNet = make([]net.IPNet, 0) // RFC 1918
-	cidrIPv4DHCP       []net.IPNet = make([]net.IPNet, 0) // RFC 3927
-	cidrIPv4Suspicious []net.IPNet = make([]net.IPNet, 0) // 1.1.1.1 and the like
-	cidrIPv6ULA        []net.IPNet = make([]net.IPNet, 0) // RFC 4193
+	// well-known IPv4 CIDR blocks
+	cidrIPv4NAT = []net.IPNet{
+		makeIPNet("10.0.0.0/8"),
+		makeIPNet("172.16.0.0/12"),
+		makeIPNet("192.168.0.0/16"),
+	}
+	cidrIPv4DHCP       = []net.IPNet{makeIPNet("169.254.0.0/16")}
+	cidrIPv4Suspicious = []net.IPNet{
+		makeIPNet("1.0.0.0/24"),
+		makeIPNet("1.2.3.0/24"),
+	}
+
+	// well-known IPv6 CIDR blocks
+	cidrIPv6ULA   = []net.IPNet{makeIPNet("fc00::/7")}
+	cidrIPv6NAT64 = []net.IPNet{makeIPNet("64:ff9b::/96")}
 )
 
 // CIDR ranges for predefined providers. Contents are loaded fro the config file
 var cidrProviders = make(map[string][]net.IPNet)
-
-func init() {
-	// IPv4
-	cidrIPv4NAT = append(cidrIPv4NAT,
-		makeIPNet("10.0.0.0/8"),
-		makeIPNet("172.16.0.0/12"),
-		makeIPNet("192.168.0.0/16"),
-	)
-	cidrIPv4DHCP = append(cidrIPv4DHCP,
-		makeIPNet("169.254.0.0/16"),
-	)
-	cidrIPv4Suspicious = append(cidrIPv4Suspicious,
-		makeIPNet("1.0.0.0/24"),
-		makeIPNet("1.2.3.0/24"),
-	)
-
-	// IPv6
-	cidrIPv6ULA = append(cidrIPv6ULA,
-		makeIPNet("fc00::/7"),
-	)
-}
 
 func makeIPNet(cidr string) net.IPNet {
 	_, ipnet, _ := net.ParseCIDR(cidr)
@@ -75,6 +65,11 @@ func IsIPv6ULA(ip string) bool {
 	return IsInCIDRList(ip, cidrIPv6ULA)
 }
 
+// IsIPv6NAT64 determines if an IP address is IPv6 NAT64 (RFC 6052)
+func IsIPv6NAT64(ip string) bool {
+	return IsInCIDRList(ip, cidrIPv6NAT64)
+}
+
 // IsIPv4NAT determines if an IPv4 address is private (RFC 1918)
 func IsIPv4NAT(ip string) bool {
 	return IsInCIDRList(ip, cidrIPv4NAT)
@@ -98,6 +93,11 @@ func isIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
 	cidrs, ok := cidrProviders[provider]
 	if !ok {
 		return false, false
+	}
+	if IsIPv6NAT64(ip) {
+		// NAT64, unwrap the IPv4 address
+		b := big.NewInt(0).SetBytes(net.ParseIP(ip)).Bytes()
+		ip = net.IPv4(b[11], b[12], b[13], b[14]).String()
 	}
 	return true, IsInCIDRList(ip, cidrs)
 }
