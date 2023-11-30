@@ -88,7 +88,7 @@ func testLocalResolvers(check log.Check) {
 		if len(rcResolversV4) > 0 {
 			testResolversOnAddressFamily(check, "LOCAL_DNS_RESOLVER", "IPv4", "local DNS resolvers", rcResolversV4)
 		} else {
-			log.NewResultItem(check, log.LevelError, "NO_LOCAL_IPV4_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
+			log.NewResultItem(check, log.LevelWarning, "NO_LOCAL_IPV4_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
 			log.Track(check)
 		}
 	}
@@ -97,8 +97,12 @@ func testLocalResolvers(check log.Check) {
 		if len(rcResolversV6) > 0 {
 			testResolversOnAddressFamily(check, "LOCAL_DNS_RESOLVER", "IPv6", "local DNS resolvers", rcResolversV6)
 		} else {
-			log.NewResultItem(check, log.LevelError, "NO_LOCAL_IPV6_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
+			log.NewResultItem(check, log.LevelWarning, "NO_LOCAL_IPV6_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
 			log.Track(check)
 		}
+	}
+
+	if len(rcResolversV4) == 0 && len(rcResolversV6) == 0 {
+		log.NewResultItem(check, log.LevelError, "NO_LOCAL_RESOLVERS", "No DNS resolvers defined in resolv.conf")
 	}
 }
