@@ -57,7 +57,7 @@ func Ping(
 			log.LevelDetail,
 			"PING_STATS",
 			fmt.Sprintf(
-				"round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
+				"round-trip min/avg/max/stddev = %v/%v/%v/%v",
 				stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt),
 		)
 	}

@@ -17,7 +17,6 @@ func SetLogLevel(level string, setverbose bool) {
 	case "error":
 		LogLevel = LevelError
 	}
-	verbose = setverbose
 }
 
 // LogLevelType defines severity of log messages
@@ -36,7 +35,6 @@ const (
 
 // LogLevel defines what should be loggged
 var LogLevel = LevelInfo // by default: info or above are reported
-var verbose bool
 
 // Name returns the human readable name of a loglevel
 func (l LogLevelType) String() string {
@@ -86,7 +84,7 @@ func NewResultItem(check Check, level LogLevelType, mnemonic string, details str
 func PrintResultItem(finding ResultItem) {
 	level := finding.Level
 	if (level == LevelFatal) || (level == LevelTodo) ||
-		(level == LevelAdmin && verbose) ||
+		(level == LevelAdmin) ||
 		(level == LevelError && LogLevel <= 3) ||
 		(level == LevelWarning && LogLevel <= 2) ||
 		(level == LevelInfo && LogLevel <= 1) ||

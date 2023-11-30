@@ -72,7 +72,10 @@ func ExecuteChecks() {
 	}
 	wg.Wait()
 
-	fmt.Println()
+	if util.Verbose() {
+		fmt.Println()
+	}
+
 	summary := fmt.Sprintf(
 		"DETAIL=%d,INFO=%d,WARNING=%d,ERROR=%d",
 		levelCounter[log.LevelDetail],
