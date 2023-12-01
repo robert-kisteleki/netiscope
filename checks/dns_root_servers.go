@@ -37,8 +37,8 @@ var rootDNSServers = []rootDNSServer{
 }
 
 // CheckDNSRootServers checks all DNS root servers
-func CheckDNSRootServers(check log.Check) {
-	defer close(check.Collector)
+func CheckDNSRootServers(check *log.Check) {
+	defer close(check.Tracker)
 	for _, server := range rootDNSServers {
 		if !util.SkipIPv4() {
 			checkRootDNSServer(check, server.letter, "IPv4", server.addresses.v4)
@@ -56,7 +56,7 @@ func CheckDNSRootServers(check log.Check) {
 // af: address family (IPv4 or IPv6)
 // server: the server's address
 func checkRootDNSServer(
-	check log.Check,
+	check *log.Check,
 	letter string,
 	af string,
 	server string,
@@ -78,7 +78,7 @@ func checkRootDNSServer(
 // af: address family (IPv4 or IPv6)
 // server: the server's address
 func testRootDNSServerOnAddressFamily(
-	check log.Check,
+	check *log.Check,
 	letter string,
 	af string,
 	server string,
@@ -105,7 +105,7 @@ func testRootDNSServerOnAddressFamily(
 // server: the server's address
 // return a MultipleResult
 func queryRootDNSServer(
-	check log.Check,
+	check *log.Check,
 	letter string,
 	af string,
 	server string,

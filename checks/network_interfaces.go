@@ -9,8 +9,8 @@ import (
 )
 
 // CheckNetworkInterfaces evaulates the available network interfaces
-func CheckNetworkInterfaces(check log.Check) {
-	defer close(check.Collector)
+func CheckNetworkInterfaces(check *log.Check) {
+	defer close(check.Tracker)
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -59,7 +59,7 @@ func CheckNetworkInterfaces(check log.Check) {
 
 // evaluateAddr checks if a given address seems to be useful
 func evaluateIPv4NetworkAddress(
-	check log.Check,
+	check *log.Check,
 	ifname string,
 	addr net.Addr,
 ) bool {
@@ -112,7 +112,7 @@ func evaluateIPv4NetworkAddress(
 }
 
 func evaluateIPv6NetworkAddress(
-	check log.Check,
+	check *log.Check,
 	ifname string,
 	addr net.Addr,
 ) bool {

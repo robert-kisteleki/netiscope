@@ -8,19 +8,19 @@ import (
 
 // CheckOpenDNSResolvers checks all (defined) open DNS resolvers
 // it's basically a shorthand for doing checks against the predefined open resolvers
-func CheckOpenDNSResolvers(check log.Check) {
-	defer close(check.Collector)
+func CheckOpenDNSResolvers(check *log.Check) {
+	defer close(check.Tracker)
 	checkGoogleDNS(check)
 	checkCloudflareDNS(check)
 	checkQuad9DNS(check)
 }
 
 // CheckGoogleDNS checks Google's open resolver
-func CheckGoogleDNS(check log.Check) {
-	defer close(check.Collector)
+func CheckGoogleDNS(check *log.Check) {
+	defer close(check.Tracker)
 	checkGoogleDNS(check)
 }
-func checkGoogleDNS(check log.Check) {
+func checkGoogleDNS(check *log.Check) {
 	checkOpenResolver(
 		check,
 		"Google",
@@ -36,11 +36,11 @@ func checkGoogleDNS(check log.Check) {
 }
 
 // CheckCloudflareDNS checks Cloudflare's open resolver
-func CheckCloudflareDNS(check log.Check) {
-	defer close(check.Collector)
+func CheckCloudflareDNS(check *log.Check) {
+	defer close(check.Tracker)
 	checkCloudflareDNS(check)
 }
-func checkCloudflareDNS(check log.Check) {
+func checkCloudflareDNS(check *log.Check) {
 	checkOpenResolver(
 		check,
 		"Cloudflare",
@@ -56,11 +56,11 @@ func checkCloudflareDNS(check log.Check) {
 }
 
 // CheckQuad9DNS checks Quad9's open resolver
-func CheckQuad9DNS(check log.Check) {
-	defer close(check.Collector)
+func CheckQuad9DNS(check *log.Check) {
+	defer close(check.Tracker)
 	checkQuad9DNS(check)
 }
-func checkQuad9DNS(check log.Check) {
+func checkQuad9DNS(check *log.Check) {
 	checkOpenResolver(
 		check,
 		"Quad9",
@@ -76,7 +76,7 @@ func checkQuad9DNS(check log.Check) {
 }
 
 func checkOpenResolver(
-	check log.Check,
+	check *log.Check,
 	provider string,
 	af string,
 	resolvers []string,

@@ -12,8 +12,8 @@ import (
 )
 
 // CheckDNSOverHTTPSProviders checks responsiveness of several DoH providers
-func CheckDNSOverHTTPSProviders(check log.Check) {
-	defer close(check.Collector)
+func CheckDNSOverHTTPSProviders(check *log.Check) {
+	defer close(check.Tracker)
 
 	// the names to look up are in the config file
 	names := util.GetDNSNamesToLookup()
@@ -105,7 +105,7 @@ func CheckDNSOverHTTPSProviders(check log.Check) {
 
 // given a format, the provider's base URL and the parameters, build the DoH query URL
 func buildDoHQueryURL(
-	check log.Check,
+	check *log.Check,
 	format string,
 	provider string,
 	qtype string,
@@ -126,7 +126,7 @@ func buildDoHQueryURL(
 // parse a DoH response, with a priori knowledge of what format was used
 // @return a list of parsed addresses or an error
 func parseDoHResponse(
-	check log.Check,
+	check *log.Check,
 	format string,
 	responseBytes []byte,
 ) (addrs []string, err error) {
@@ -177,7 +177,7 @@ func parseDoHJSONResponse(responseBytes []byte) (addrs []string, err error) {
 
 // parse an RFC8484 formatted response
 func parseDoHRFC8484Response(
-	check log.Check,
+	check *log.Check,
 	responseBytes []byte,
 ) (addrs []string, err error) {
 	var parsed map[string][]string

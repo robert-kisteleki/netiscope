@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-type checkFunction func(log.Check)
+type checkFunction func(*log.Check)
 
 var (
 	// what checks are available
@@ -37,34 +37,28 @@ func ExecuteChecks() {
 	}
 
 	var wg sync.WaitGroup
-	var mutexr, mutext sync.Mutex
-	levelCounter := make([]int, 7)
+	var mutex sync.Mutex
 	checkCounter := make(map[string]int)
+	checks := make([]*log.Check, 0)
 	for i := 0; i < len(checksToDo); i++ {
 		checkName := checksToDo[i]
 		checkFunction, found := knownChecks[checkName]
 		if found {
-			results := make(chan log.ResultItem)
+			results := make([]log.ResultItem, 0)
 			tracker := make(chan string)
 			wg.Add(1)
-			check := log.Check{Name: checkName, Collector: results, Tracker: tracker}
+			check := &log.Check{Name: checkName, Collector: results, Tracker: tracker}
+			checks = append(checks, check)
+
 			go checkFunction(check)
-			go func(c chan log.ResultItem) {
-				for v := range c {
-					mutexr.Lock()
-					log.PrintResultItem(v)
-					levelCounter[v.Level]++
-					mutexr.Unlock()
+			go func(c <-chan string) {
+				for tick := range c {
+					mutex.Lock()
+					checkCounter[tick]++
+					showProgress(checkCounter)
+					mutex.Unlock()
 				}
 				wg.Done()
-			}(results)
-			go func(c chan string) {
-				for check := range c {
-					mutext.Lock()
-					checkCounter[check]++
-					showProgress(levelCounter, checkCounter)
-					mutext.Unlock()
-				}
 			}(tracker)
 		} else {
 			log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "NO_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i])))
@@ -74,6 +68,14 @@ func ExecuteChecks() {
 
 	if util.Verbose() {
 		fmt.Println()
+	}
+
+	levelCounter := make([]int, 7)
+	for _, check := range checks {
+		for _, msg := range check.Collector {
+			log.PrintResultItem(msg)
+			levelCounter[msg.Level]++
+		}
 	}
 
 	summary := fmt.Sprintf(
@@ -86,14 +88,11 @@ func ExecuteChecks() {
 	log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "SUMMARY", summary))
 }
 
-func showProgress(levels []int, tracks map[string]int) {
+func showProgress(tracks map[string]int) {
 	if !util.Verbose() {
 		return
 	}
 	fmt.Fprint(os.Stderr, "\r")
-	for i := 0; i < 4; i++ {
-		fmt.Fprintf(os.Stderr, "%s=%d ", log.LogLevelType(i), levels[i])
-	}
 	keys := make([]string, 0, len(tracks))
 	for k := range tracks {
 		keys = append(keys, k)

@@ -11,7 +11,7 @@ import (
 // query the predefined list of names from a set of resolvers
 // return a MultipleResult
 func queryNamesFromResolvers(
-	check log.Check,
+	check *log.Check,
 	rtype string,
 	resolvers []string,
 ) (out MultipleResult) {
@@ -74,7 +74,7 @@ func queryNamesFromResolvers(
 // ask one resolver for one query
 // return ResultCode to indicate if it was successful
 func queryNameFromResolver(
-	check log.Check,
+	check *log.Check,
 	name string,
 	resolver string,
 ) ResultCode {
@@ -131,7 +131,7 @@ func queryNameFromResolver(
 // kind: which kind of resolver are we testing (local or open)
 // resolvers: the resolvers to test
 func testResolversOnAddressFamily(
-	check log.Check,
+	check *log.Check,
 	mnemo string,
 	af string,
 	kind string,
@@ -162,7 +162,7 @@ func testResolversOnAddressFamily(
 // resolvers: the resolvers to test
 // results: the results to analyse
 func reportResolversOnAddressFamily(
-	check log.Check,
+	check *log.Check,
 	mnemo string,
 	af string,
 	kind string,

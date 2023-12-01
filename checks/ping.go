@@ -13,7 +13,7 @@ import (
 // Ping (duh) a specific target using our favourite library
 // return a ReultCode
 func Ping(
-	check log.Check,
+	check *log.Check,
 	target string,
 	mnemo string,
 ) (result ResultCode) {
@@ -97,7 +97,7 @@ func Ping(
 // PingServers pings a set of servers
 // return a MultipleResult
 func PingServers(
-	check log.Check,
+	check *log.Check,
 	mnemo string,
 	resolvers []string,
 ) (outcollector MultipleResult) {

@@ -19,8 +19,8 @@ var (
 )
 
 // CheckLocalDNSResolvers reads the local DNS reolver configuration and tests the servers listed therein
-func CheckLocalDNSResolvers(check log.Check) {
-	defer close(check.Collector)
+func CheckLocalDNSResolvers(check *log.Check) {
+	defer close(check.Tracker)
 	if !loadResolvers(check) {
 		log.NewResultItem(
 			check, log.LevelError, "NO_RESOLV_CONF",
@@ -33,7 +33,7 @@ func CheckLocalDNSResolvers(check log.Check) {
 
 // read and collect useful entries from resolv.conf
 // return: success or not
-func loadResolvers(check log.Check) bool {
+func loadResolvers(check *log.Check) bool {
 	resolvconf, err := os.Open("/etc/resolv.conf")
 	if err != nil {
 		return false
@@ -83,7 +83,7 @@ func loadResolvers(check log.Check) bool {
 }
 
 // test the set of local resolvers on IPv4 and IPv6
-func testLocalResolvers(check log.Check) {
+func testLocalResolvers(check *log.Check) {
 	if !util.SkipIPv4() {
 		if len(rcResolversV4) > 0 {
 			testResolversOnAddressFamily(check, "LOCAL_DNS_RESOLVER", "IPv4", "local DNS resolvers", rcResolversV4)

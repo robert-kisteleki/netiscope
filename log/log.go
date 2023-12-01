@@ -61,7 +61,7 @@ type ResultItem struct {
 
 type Check struct {
 	Name      string
-	Collector chan ResultItem
+	Collector []ResultItem
 	Tracker   chan string
 }
 
@@ -77,8 +77,8 @@ func NewFinding(check string, level LogLevelType, mnemonic string, details strin
 	}
 }
 
-func NewResultItem(check Check, level LogLevelType, mnemonic string, details string) {
-	check.Collector <- NewFinding(check.Name, level, mnemonic, details)
+func NewResultItem(check *Check, level LogLevelType, mnemonic string, details string) {
+	check.Collector = append(check.Collector, NewFinding(check.Name, level, mnemonic, details))
 }
 
 func PrintResultItem(finding ResultItem) {
@@ -121,6 +121,6 @@ func DurationToHuman(duration time.Duration) string {
 	}
 }
 
-func Track(check Check) {
+func Track(check *Check) {
 	check.Tracker <- check.Name
 }

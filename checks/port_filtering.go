@@ -13,8 +13,8 @@ import (
 const expectedReply = "Netiscope\n"
 
 // CheckPortFiltering checks if outgoing connections to various ports are allowed or not
-func CheckPortFiltering(check log.Check) {
-	defer close(check.Collector)
+func CheckPortFiltering(check *log.Check) {
+	defer close(check.Tracker)
 
 	targets := util.GetTargetsToPortCheck()
 	for _, target := range targets {

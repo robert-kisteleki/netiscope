@@ -104,7 +104,7 @@ func isIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
 
 // CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
 func CheckIPForProvider(
-	check log.Check,
+	check *log.Check,
 	ip string,
 	provider string,
 ) {

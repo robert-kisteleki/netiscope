@@ -26,7 +26,7 @@ import (
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // dnserror: code upon error
 func DNSQuery(
-	check log.Check,
+	check *log.Check,
 	target string,
 	qType string,
 	server string,
@@ -77,7 +77,7 @@ func DNSQuery(
 // zeroID: use zero as query ID?
 // @return: an assembled DNS query in on-the-wire format
 func CreateDNSQuery(
-	check log.Check,
+	check *log.Check,
 	target string,
 	qType string,
 	nsid bool,
@@ -98,7 +98,7 @@ func CreateDNSQuery(
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // error code upon error
 func ParseDNSResponse(
-	check log.Check,
+	check *log.Check,
 	responseBytes []byte,
 ) (result map[string][]string, err error) {
 	var response dns.Msg
@@ -120,7 +120,7 @@ func ParseDNSResponse(
 // zeroID: use zero as query ID?
 // @return: the DNS query (using the type of the underlying DNS package)
 func prepareDNSQuery(
-	check log.Check,
+	check *log.Check,
 	target string,
 	qType string,
 	nsid bool,
@@ -186,7 +186,7 @@ func prepareDNSQuery(
 // @return:
 // result: a list of results and options (IPs or SOA or NSID records and such)
 func parseDNSResponse(
-	check log.Check,
+	check *log.Check,
 	response *dns.Msg,
 ) (result map[string][]string) {
 	result = make(map[string][]string)
