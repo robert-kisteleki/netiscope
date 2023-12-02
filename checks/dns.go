@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"netiscope/log"
+	"os"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -199,8 +200,11 @@ func parseDNSResponse(
 			result["AAAA"] = append(result["AAAA"], t.AAAA.String())
 		case *dns.SOA:
 			result["SOA"] = append(result["SOA"], fmt.Sprintf("%s %d", t.Ns, t.Serial))
+		case *dns.NS:
+			result["NS"] = append(result["NS"], t.Ns)
 		default:
 			log.NewResultItem(check, log.LevelFatal, "DNS", fmt.Sprintf("Don't know how to handle result type %v", t))
+			fmt.Fprintf(os.Stderr, "Don't know how to handle result type (%s)\n", answer.Header())
 			panic(1)
 		}
 	}
