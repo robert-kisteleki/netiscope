@@ -27,7 +27,7 @@ Now you're ready to compile and run:
 
 ```
 go build netiscope
-./netiscope -v -color
+./netiscope -v
 ```
 
 On Linux, the ping functionality may need '"unprivileged" ping via UDP" permission:
@@ -118,14 +118,13 @@ Notable command line options:
   * `-s SECTION` specifies a configuration section list sthe checks to execute instead of `checks`
   * `-skip4` and `-skip6` disable IPV4/IPv6 checks, respectively
   * `-force4` and `-force6` enforce IPV4/IPv6 checks, respectively, even if no useful network interfaces are found
-  * `-l LEVEL` sets the log level. LEVEL can be _detail_, _info_ (default), _warning_ or _error_
-  * `-v` is a shorthand to increase logging to _detail_ level
-  * `-color` enables (ANSI) output colors
+  * `-l LEVEL` sets the log level. LEVEL can be _detail_, _info_, _warning_ or _error_
+  * `-v` for verbose mode:
+  * `-check CHECK` to execure (only) that check
 
 The _configuration file_ has several sections:
   * The `main` section has basic options, many which can also be set on the command line:
     * `loglevel`
-    * `color`
     * `skip_ipv4` and `skip_ipv6`
     * `force_ipv4` and `force_ipv6`
     * `ping_packets`
