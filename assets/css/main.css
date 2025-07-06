@@ -1,0 +1,10 @@
+body {color: #111111}
+
+.result_0 {color: #0000FF} /* detail */
+.result_1 {color: #00C000} /* info */
+.result_2 {color: #FFA000} /* warning */
+.result_3 {color: #FF0000} /* error */
+.result_4 {color: #FF00FF} /* fatal */
+.result_5 {color: #FFFF00} /* todo */
+.result_6 {color: #000000} /* admin */
+

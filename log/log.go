@@ -65,6 +65,8 @@ type Check struct {
 	Tracker   chan string
 }
 
+var AllResults chan ResultItem
+
 // NewFinding logs one finding
 func NewFinding(check string, level LogLevelType, mnemonic string, details string) ResultItem {
 	now := time.Now().Format(time.RFC3339)
@@ -78,7 +80,9 @@ func NewFinding(check string, level LogLevelType, mnemonic string, details strin
 }
 
 func NewResultItem(check *Check, level LogLevelType, mnemonic string, details string) {
-	check.Collector = append(check.Collector, NewFinding(check.Name, level, mnemonic, details))
+	finding := NewFinding(check.Name, level, mnemonic, details)
+	check.Collector = append(check.Collector, finding)
+	AllResults <- finding
 }
 
 func PrintResultItem(finding ResultItem) {

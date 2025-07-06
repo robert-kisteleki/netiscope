@@ -26,6 +26,7 @@ var (
 	flagLogLevel  string
 	flagVerbose   bool
 	flagRunCheck  string
+	flagGui       bool
 
 	// network interface check can signal if there were no routable addresses found
 	noUsableIPv4 bool
@@ -48,6 +49,7 @@ func SetupFlags() {
 	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'")
 	flag.BoolVar(&flagVerbose, "v", false, "Be verbose reporting progress")
 	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
+	flag.BoolVar(&flagGui, "gui", false, "Start with a browser GUI")
 
 	flag.Parse()
 }
@@ -191,6 +193,10 @@ func GetDoHProviders() [][]string {
 
 func Verbose() bool {
 	return flagVerbose
+}
+
+func StartGui() bool {
+	return flagGui || cfg.Section("main").Key("gui").MustBool(false)
 }
 
 // check which file exists, from a list of candidates in order of preference

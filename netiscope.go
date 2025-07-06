@@ -20,6 +20,17 @@ func main() {
 	util.ReadCIDRConfig()
 	log.SetLogLevel(util.GetLogLevel(), util.Verbose())
 	reportNonStandardConfig()
+
+	log.AllResults = make(chan log.ResultItem)
+
+	if util.StartGui() {
+		runGui()
+	} else {
+		startChecks()
+	}
+}
+
+func startChecks() {
 	start()
 	checks.ExecuteChecks()
 	finish()
