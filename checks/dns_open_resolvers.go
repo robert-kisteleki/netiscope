@@ -13,12 +13,14 @@ func CheckOpenDNSResolvers(check *log.Check) {
 	checkGoogleDNS(check)
 	checkCloudflareDNS(check)
 	checkQuad9DNS(check)
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }
 
 // CheckGoogleDNS checks Google's open resolver
 func CheckGoogleDNS(check *log.Check) {
 	defer close(check.Tracker)
 	checkGoogleDNS(check)
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }
 func checkGoogleDNS(check *log.Check) {
 	checkOpenResolver(
@@ -39,7 +41,9 @@ func checkGoogleDNS(check *log.Check) {
 func CheckCloudflareDNS(check *log.Check) {
 	defer close(check.Tracker)
 	checkCloudflareDNS(check)
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }
+
 func checkCloudflareDNS(check *log.Check) {
 	checkOpenResolver(
 		check,
@@ -59,7 +63,9 @@ func checkCloudflareDNS(check *log.Check) {
 func CheckQuad9DNS(check *log.Check) {
 	defer close(check.Tracker)
 	checkQuad9DNS(check)
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }
+
 func checkQuad9DNS(check *log.Check) {
 	checkOpenResolver(
 		check,

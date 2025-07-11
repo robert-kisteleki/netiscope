@@ -27,6 +27,8 @@ var (
 	flagVerbose   bool
 	flagRunCheck  string
 	flagGui       bool
+	GuiIPv4       bool
+	GuiIPv6       bool
 
 	// network interface check can signal if there were no routable addresses found
 	noUsableIPv4 bool
@@ -115,12 +117,20 @@ func GetConfigBoolParam(section string, key string, deflt bool) bool {
 
 // SkipIPv4 decides if IPv4 related checks should be skipped
 func SkipIPv4() bool {
-	return !flagForceIPv4 && (flagSkipIPv4 || cfg.Section("main").Key("skip_ipv4").MustBool(false) || noUsableIPv4)
+	if flagGui {
+		return !GuiIPv4
+	} else {
+		return !flagForceIPv4 && (flagSkipIPv4 || cfg.Section("main").Key("skip_ipv4").MustBool(false) || noUsableIPv4)
+	}
 }
 
 // SkipIPv6 decides if IPv6 related checks should be skipped
 func SkipIPv6() bool {
-	return !flagForceIPv6 && (flagSkipIPv6 || cfg.Section("main").Key("skip_ipv6").MustBool(false) || noUsableIPv6)
+	if flagGui {
+		return !GuiIPv6
+	} else {
+		return !flagForceIPv6 && (flagSkipIPv6 || cfg.Section("main").Key("skip_ipv6").MustBool(false) || noUsableIPv6)
+	}
 }
 
 // GetPingCount returns how many ping packets should be sent

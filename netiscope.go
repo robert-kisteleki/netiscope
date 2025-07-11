@@ -8,7 +8,6 @@
 package main
 
 import (
-	"fmt"
 	"netiscope/checks"
 	"netiscope/log"
 	"netiscope/util"
@@ -19,44 +18,27 @@ func main() {
 	util.ReadConfig()
 	util.ReadCIDRConfig()
 	log.SetLogLevel(util.GetLogLevel(), util.Verbose())
-	reportNonStandardConfig()
 
 	log.AllResults = make(chan log.ResultItem)
 
 	if util.StartGui() {
 		runGui()
 	} else {
-		startChecks()
+		go startChecks(util.GetChecks(), true)
+		for data := range log.AllResults {
+			log.PrintResultItem(data)
+		}
 	}
 }
 
-func startChecks() {
-	start()
-	checks.ExecuteChecks()
-	finish()
-}
-
-func reportNonStandardConfig() {
+func startChecks(checksToDo []string, print bool) {
+	checks.Start()
 	if util.SkipIPv4() {
-		log.PrintResultItem(
-			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled"),
-		)
+		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
 	}
 	if util.SkipIPv6() {
-		log.PrintResultItem(
-			log.NewFinding("main", log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled"),
-		)
+		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
 	}
-}
-
-func start() {
-	log.PrintResultItem(
-		log.NewFinding("main", log.LevelAdmin, "START", fmt.Sprintf("Started (version %s)", util.Version)),
-	)
-}
-
-func finish() {
-	log.PrintResultItem(
-		log.NewFinding("main", log.LevelAdmin, "FINISH", "Finished"),
-	)
+	checks.ExecuteChecks(checksToDo, print)
+	checks.Finish()
 }

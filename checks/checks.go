@@ -28,9 +28,7 @@ var (
 )
 
 // ExecuteChecks runs all the defined checks
-func ExecuteChecks() {
-	checksToDo := util.GetChecks()
-
+func ExecuteChecks(checksToDo []string, print bool) {
 	if len(checksToDo) == 0 {
 		fmt.Println("No checks defined")
 		return
@@ -61,7 +59,9 @@ func ExecuteChecks() {
 				wg.Done()
 			}(tracker)
 		} else {
-			log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "NO_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i])))
+			log.NewResultItem(log.AdminCheck, log.LevelAdmin, "NO_CHECK",
+				fmt.Sprintf("No such check: %s", checksToDo[i]),
+			)
 		}
 	}
 	wg.Wait()
@@ -73,7 +73,9 @@ func ExecuteChecks() {
 	levelCounter := make([]int, 7)
 	for _, check := range checks {
 		for _, msg := range check.Collector {
-			log.PrintResultItem(msg)
+			if print {
+				log.PrintResultItem(msg)
+			}
 			levelCounter[msg.Level]++
 		}
 	}
@@ -85,7 +87,7 @@ func ExecuteChecks() {
 		levelCounter[log.LevelWarning],
 		levelCounter[log.LevelError],
 	)
-	log.PrintResultItem(log.NewFinding("main", log.LevelAdmin, "SUMMARY", summary))
+	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SUMMARY", summary)
 }
 
 func showProgress(tracks map[string]int) {
@@ -103,4 +105,14 @@ func showProgress(tracks map[string]int) {
 		progress = append(progress, fmt.Sprintf("%d", tracks[key]))
 	}
 	fmt.Fprintf(os.Stderr, "PROGRESS=%s", strings.Join(progress, "/"))
+}
+
+func Start() {
+	log.CreateAdminCheck()
+	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "START", fmt.Sprintf("Started (version %s)", util.Version))
+}
+
+func Finish() {
+	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "FINISH", "Finished")
+	close(log.AllResults)
 }

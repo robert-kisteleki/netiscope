@@ -21,11 +21,29 @@
 				<table class="table table-sm table-borderless g-0">
 					<thead>
 						<tr>
-							<th>Run</th>
-							<th>Check</th>
+							<th colspan="2">Checks to run:</th>
 						</tr>
 					</thead>
 					<tbody id="checks_list_table">
+					</tbody>
+				</table>
+				<table class="table table-sm table-borderless g-0">
+					<thead>
+						<tr>
+							<th colspan="2">Over:</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>
+								<input class="form-check-input" type="checkbox" id="af4" checked>
+								<label class="form-check-label" for="af4">IPv4</label>
+							</td>
+							<td>
+								<input class="form-check-input" type="checkbox" id="af6" checked>
+								<label class="form-check-label" for="af6">IPv6</label>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 				<table class="table table-sm table-borderless g-0">
@@ -65,7 +83,7 @@
 
 			<td style="width: 100%">
 				<p><b>Results</b></p>
-				<div class="accordion" id="results_accordion"></div>
+				<div class="accordion accordion-flush" id="results_accordion"></div>
 			</td>
 		</tr>
 	</table>

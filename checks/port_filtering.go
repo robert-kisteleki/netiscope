@@ -81,4 +81,6 @@ func CheckPortFiltering(check *log.Check) {
 			}
 		}
 	}
+
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }

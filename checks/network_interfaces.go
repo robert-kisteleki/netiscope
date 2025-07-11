@@ -55,6 +55,8 @@ func CheckNetworkInterfaces(check *log.Check) {
 	}
 
 	// TODO: check if the gateway(s) is/are reachable?
+
+	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
 }
 
 // evaluateAddr checks if a given address seems to be useful

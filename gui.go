@@ -43,14 +43,31 @@ func runGui() {
 func guiControlStart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var b []byte
-	if r.Method == http.MethodPost {
-		go startChecks()
-		b = makeGuiControlResponse(guiResponse{Code: "OK", Message: "Started", Params: nil})
-	} else {
-		b = makeGuiControlResponse(guiResponse{Code: "ERROR", Message: "Invalid request method", Params: nil})
+	type RequestData struct {
+		Checks []string `json:"checks"`
+		IPv4   bool     `json:"ipv4"`
+		IPv6   bool     `json:"ipv6"`
 	}
-	fmt.Fprint(w, string(b))
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
+	}
+
+	var data RequestData
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	util.GuiIPv4 = data.IPv4
+	util.GuiIPv6 = data.IPv6
+	go startChecks(data.Checks, false)
+
+	fmt.Fprint(w, string(
+		makeGuiControlResponse(guiResponse{Code: "OK", Message: "Started", Params: nil})),
+	)
 }
 
 func guiControlListChecks(w http.ResponseWriter, r *http.Request) {
@@ -89,9 +106,7 @@ func (wsh resultsWsHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Sprintf("Error %s when upgrading connection to websocket", err))
 	}
 
-	defer func() {
-		conn.Close()
-	}()
+	defer conn.Close()
 
 	// here we should listen to the results channel
 	for data := range log.AllResults {

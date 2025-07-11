@@ -66,6 +66,16 @@ type Check struct {
 }
 
 var AllResults chan ResultItem
+var AdminCheck *Check
+
+// CreateAdminCheck creates a check that collects admin messages
+func CreateAdminCheck() {
+	AdminCheck = &Check{
+		Name:      "admin",
+		Collector: make([]ResultItem, 0),
+		Tracker:   make(chan string),
+	}
+}
 
 // NewFinding logs one finding
 func NewFinding(check string, level LogLevelType, mnemonic string, details string) ResultItem {
