@@ -30,6 +30,7 @@ func runGui() {
 
 	// define the paths we serve: static, API, WS
 	http.Handle("/", http.FileServer(http.FS(serverRoot)))
+	http.HandleFunc("/api/version", guiControlGetVersion)
 	http.HandleFunc("/api/control/checks", guiControlListChecks)
 	http.HandleFunc("/api/control/start", guiControlStart)
 	http.Handle("/api/results/", resultsWsHandle{upgrader: websocket.Upgrader{}})
@@ -38,6 +39,13 @@ func runGui() {
 
 	// start serving
 	http.ListenAndServe(":8080", nil)
+}
+
+func guiControlGetVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	b := makeGuiControlResponse(guiResponse{Code: "OK", Message: "OK", Params: util.Version})
+	fmt.Fprint(w, string(b))
 }
 
 func guiControlStart(w http.ResponseWriter, r *http.Request) {

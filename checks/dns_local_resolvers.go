@@ -30,7 +30,7 @@ func CheckLocalDNSResolvers(check *log.Check) {
 	}
 	testLocalResolvers(check)
 
-	log.NewResultItem(check, log.LevelAdmin, "FINISH", "Finished")
+	log.NewResultItem(check, log.LevelDetail, "FINISH", "Finished")
 }
 
 // read and collect useful entries from resolv.conf

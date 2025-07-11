@@ -10,20 +10,30 @@ function handleWebsocketRead(data) {
 	checkStatuses[check_name][levelToName(data.level)] += 1;
 	if( data.mnemonic == "FINISH" ) {
 		finishCheck(check_name);
+		if( check_name == "admin" ) {
+			$("#startbutton").html(`<span>Start checks</span>`);
+			$("#startbutton").prop("disabled", false);
+		}
 	}
 	updateCheckStatus("admin");
 	updateCheckStatus(check_name);
 }
 
-
 $.when( $.ready ).then(function() {
 	$.ajax({
-				url: '/api/control/checks',
-				success: function(data) {
-					checksList = data.params;
-					showChecksList()
-				},
-		});
+		url: '/api/version',
+		success: function(data) {
+			$("#version").text(data.params);
+		},
+	});
+
+	$.ajax({
+		url: '/api/control/checks',
+		success: function(data) {
+			checksList = data.params;
+			showChecksList()
+		},
+	});
 
 	// websocket data
 	webSocket = new WebSocket("http://localhost:8080/api/results/")
@@ -54,6 +64,8 @@ $.when( $.ready ).then(function() {
 			$(".result_warning").hide();
 		}
 	});
+
+	$("#startbutton").on("click", startChecks)
 });
 
 function showChecksList() {
@@ -61,24 +73,22 @@ function showChecksList() {
 	if (checksList.length === 0) {
 		$('#checkslist').append('<li>No checks available</li>');
 	} else {
-		checksList.forEach(function(check) {
-			$('#checks_list_table').append(`
+		checksList.reverse().forEach(function(check) {
+			$('#checks_list_table').prepend(`
 <tr>
 	<td><input class="form-check-input" type="checkbox" id="check_run_`+check+`" checked></td>
 	<td><label class="form-check-label" for="check_run_`+check+`">`+check+`</label></td>
 </tr>
 `);
 		});
-			$('#checks_list_table').append(`
-<tr>
-	<td></td>
-	<td><input class="btn btn-primary" type="submit" value="Start checks" onclick="startChecks()" id="startbutton" /></td>
-</tr>
-`);
 	}
 }
 
 function startChecks() {
+	// reset state
+	checkStatuses = {}
+	$("#results_accordion").empty();
+
 	var checksToDo = []
   container = $("#results_accordion")
 	items = $("input[type='checkbox']").filter(':checked')
@@ -105,7 +115,7 @@ function startChecks() {
 					ipv6: $("#af6").is(":checked"),
 				}),
 		});
-	$("#startbutton").html(`<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span role="status">Running...</span>`);
+	$("#startbutton").html(`<span>Running...</span> <span class="spinner-border spinner-border-sm"></span>`);
 	$("#startbutton").prop("disabled", true);
 }
 
