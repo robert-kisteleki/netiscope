@@ -1,10 +1,14 @@
 body {color: #111111}
 
-.result_detail {color: #0000FF}
-.result_info {color: #00C000}
-.result_warning {color: #FFA000}
-.result_error {color: #FF0000}
-.result_fatal {color: #FF00FF}
-.result_todo {color: #FFFF00}
-.result_admin {color: #000000}
+.result_level_detail {color: #0000FF}
+.result_level_info {color: #00C000}
+.result_level_warning {color: #FFA000}
+.result_level_error {color: #FF0000}
+.result_level_fatal {color: #FF00FF}
+.result_level_todo {color: #FFFF00}
+.result_level_admin {color: #000000}
 
+.result_summary_detail {color: #0000FF}
+.result_summary_info {color: #00C000}
+.result_summary_warning {color: #FFA000}
+.result_summary_error {color: #FF0000}
