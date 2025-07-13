@@ -86,13 +86,16 @@ function showChecksList() {
 	if (checksList.length === 0) {
 		$("#checkslist").append(`<tr><td>No checks available</td></tr>`);
 	} else {
-		checksList.reverse().forEach(function(check) {
-			$("#checks_list_table").prepend(`
-<tr>
-	<td><input class="form-check-input" type="checkbox" id="check_run_`+check+`" checked></td>
-	<td><label class="form-check-label" for="check_run_`+check+`">`+check+`</label></td>
-</tr>
-`);
+		checksList.forEach(function(check) {
+			$("#checks_list_table").append(`
+<div class="row">
+	<div class="col-sm-2">
+	  <input class="form-check-input" type="checkbox" id="check_run_`+check+`" checked>
+	</div>
+	<div class="col-sm-10">
+ 	 <label class="form-check-label" for="check_run_`+check+`">`+check+`</label>
+	</div>
+</div>`);
 		});
 	}
 }

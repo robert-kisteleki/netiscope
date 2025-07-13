@@ -15,71 +15,78 @@
 
 	<h1>Netiscope GUI</h1>
 
-	<table class="table table-sm table-borderless g-0">
-		<tr>
-			<td style="width: 0%;">
-				<table class="table table-sm table-borderless g-0">
-					<thead>
-						<tr>
-							<th colspan="2">Checks to run:</th>
-						</tr>
-					</thead>
-					<tbody id="checks_list_table">
-						<tr>
-							<td></td>
-							<td>
-								<button class="btn btn-primary" type="submit" id="startbutton" />Start checks</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<table class="table table-sm table-borderless g-0">
-					<thead>
-						<tr>
-							<th colspan="2">Over:</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>
-								<input class="form-check-input" type="checkbox" id="af4" checked>
-								<label class="form-check-label" for="af4">IPv4</label>
-							</td>
-							<td>
-								<input class="form-check-input" type="checkbox" id="af6" checked>
-								<label class="form-check-label" for="af6">IPv6</label>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<table class="table table-sm table-borderless g-0">
-					<thead>
-						<tr>
-							<th>Severity</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>
-								<select class="form-select form-select-sm" id="severity_filter">
-									<option value="all">All</option>
-									<option value="info">Info</option>
-									<option value="warning" selected>Warning</option>
-									<option value="error">Error</option>
-								</select>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<p class="text-muted">Version: <span id="version"></span></p>
-			</td>
+	<div class="container-fluid">
+		<div class="row">
 
-			<td style="width: 100%">
+			<div class="col-sm-3 sidebar-sticky">
+
+				<div class="container-fluid">
+
+					<div class="row">
+						<div class="col">
+							<button class="btn btn-primary" type="submit" id="startbutton">Start checks</button>
+						</div>
+					</div>
+
+					<div class="row mt-3">
+						<div class="col">
+							<h5>Checks to run</h5>
+						</div>
+					</div>
+
+					<div id="checks_list_table">
+					</div>
+
+					<div class="row mt-3">
+						<div class="col">
+							<h5>Over</h5>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-6">
+							<input class="form-check-input" type="checkbox" id="af4" checked>
+							<label class="form-check-label" for="af4">IPv4</label>
+						</div>
+						<div class="col-sm-6">
+							<input class="form-check-input" type="checkbox" id="af6" checked>
+							<label class="form-check-label" for="af6">IPv6</label>
+						</div>
+					</div>
+
+					<div class="row mt-3">
+						<div class="col">
+							<h5>Severity</h5>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col">
+							<select class="form-select form-select-sm" id="severity_filter">
+								<option value="all">All</option>
+								<option value="info">Info</option>
+								<option value="warning" selected>Warning</option>
+								<option value="error">Error</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="row mt-3">
+						<div class="col">
+							<span class="small text-body-tertiary">Version <span id="version"></span></span>
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+			<div class="col-sm-9">
 				<p><b>Results</b></p>
 				<div class="accordion accordion-flush" id="results_accordion"></div>
-			</td>
-		</tr>
-	</table>
+			</div>
+		</div>
+	</div>
 
 </body>
 </html>
