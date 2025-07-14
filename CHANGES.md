@@ -1,10 +1,14 @@
 ## CHANGES
 
 next
+  * ...
+
+0.6.20250714
   * CHANGED: run checks asynchronously
   * CHANGED: b-root changed IP addresses
   * NEW: run a specific test only
   * NEW: show progress in verbose mode
+  * NEW: GUI (start with `-gui`)
 
 0.5.20231118
   * updated to go1.21
