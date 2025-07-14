@@ -31,7 +31,7 @@ func main() {
 	}
 }
 
-func startChecks(checksToDo []string, print bool) {
+func startChecks(checksToDo []string, printAndClose bool) {
 	checks.Start()
 	if util.SkipIPv4() {
 		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
@@ -39,6 +39,6 @@ func startChecks(checksToDo []string, print bool) {
 	if util.SkipIPv6() {
 		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
 	}
-	checks.ExecuteChecks(checksToDo, print)
-	checks.Finish()
+	checks.ExecuteChecks(checksToDo, printAndClose)
+	checks.Finish(printAndClose)
 }

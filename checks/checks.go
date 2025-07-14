@@ -112,7 +112,9 @@ func Start() {
 	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "START", fmt.Sprintf("Started (version %s)", util.Version))
 }
 
-func Finish() {
+func Finish(closeChannel bool) {
 	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "FINISH", "Finished")
-	close(log.AllResults)
+	if closeChannel {
+		close(log.AllResults)
+	}
 }
