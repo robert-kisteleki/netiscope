@@ -112,7 +112,7 @@ func CheckIPForProvider(
 	switch {
 	case !known:
 		log.NewResultItem(
-			check, log.LevelDetail, "PROVIDER_CIDR_UNKNOWN",
+			check, log.LevelInfo, "PROVIDER_CIDR_UNKNOWN",
 			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
 		)
 	case known && contains:
@@ -122,7 +122,7 @@ func CheckIPForProvider(
 		)
 	case known && !contains:
 		log.NewResultItem(
-			check, log.LevelError, "PROVIDER_CIDR_NOT_OK",
+			check, log.LevelWarning, "PROVIDER_CIDR_NOT_OK",
 			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
 		)
 	}
