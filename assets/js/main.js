@@ -151,10 +151,14 @@ return `
 <div class="accordion-item">
 	<h2 class="accordion-header">
 		<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#results_accordion_`+check_name+`">
-			`+check_name+`
-			<div class="ms-auto" id="check_status_`+check_name+`"></div>
-			<div class="ms-auto" id="check_status_`+check_name+`_spinner">
-				<div class="spinner-border spinner-border-sm" role="status"></div>
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-sm-5">`+check_name+`</div>
+					<div class="col-sm-6"><div class="ms-auto" id="check_status_`+check_name+`"></div></div>
+					<div class="col-sm-1 text-end">
+						<div class="spinner-border spinner-border-sm" role="status" id="check_status_`+check_name+`_spinner"></div>
+					</div>
+				</div>
 			</div>
 		</button>
 	</h2>
