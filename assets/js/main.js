@@ -69,6 +69,7 @@ $.when( $.ready ).then(function() {
 			$(".result_level_detail").hide();
 			$(".result_level_info").hide();
 			$(".result_level_warning").show();
+			break;
 		default:
 			$(".result_level_detail").hide();
 			$(".result_level_info").hide();
@@ -84,7 +85,10 @@ $.when( $.ready ).then(function() {
 function showChecksList() {
 	$("#checkslist").empty();
 	if (checksList.length === 0) {
-		$("#checkslist").append(`<tr><td>No checks available</td></tr>`);
+		$("#checkslist").append(`
+<div class="row">
+	<div class="col">No checks available</div>
+</div>`);
 	} else {
 		checksList.forEach(function(check) {
 			$("#checks_list_table").append(`
@@ -156,7 +160,7 @@ return `
 	</h2>
 	<div id="results_accordion_`+check_name+`" class="accordion-collapse collapse show">
 		<div class="accordion-body">
-			<table class="table table-sm table-borderless" id="table_`+check_name+`"></table>
+			<div class="container-fluid" id="table_`+check_name+`"></div>
 		</div>
 	</div>
 </div>
@@ -173,11 +177,11 @@ function formatResult(data) {
 		(severity=="error" && data.level>=3);
 
 		return `
-<tr class="result_level_`+levelToName(data.level)+`" `+(disp ? "" : "style='display:none;'")+`>
-	<td>`+data.timestamp.slice("YYYY-MM-DDT".length)+`</td>
-	<td>`+data.mnemonic+`</td>
-	<td>`+data.details+`</td>
-</tr>`;
+<div class="row result_level_`+levelToName(data.level)+`" `+(disp ? "" : "style='display:none;'")+`>
+	<div class="col-sm-2">`+data.timestamp.slice("YYYY-MM-DDT".length)+`</div>
+	<div class="col-sm-3 text-truncate">`+data.mnemonic+`</div>
+	<div class="col-sm-7">`+data.details+`</div>
+</div>`;
 }
 
 // create a new check status object with all counters set to zero
