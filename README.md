@@ -1,6 +1,6 @@
 # Netiscope
 
-A simple command line (CLI) tool to check network connectivity.
+A simple tool to check network connectivity with a CLI and optionally with a small GUI.
 
 **Netiscope** is meant to be a helper tool to be used in case the network doesn't seem to be working properly, and can give hints about what's going wrong. There is not a lot of secret sauce to this tool: a seasoned user can do these check themselves with various tools to determine the root cause of a problem. However, **Netiscope** may make this task simpler.
 
@@ -28,6 +28,13 @@ Now you're ready to compile and run:
 ```
 go build netiscope
 ./netiscope -v
+```
+
+If you want to use the GUI, start with `-gui` added. This makes the tool listen on localhost:8080 (HTTP) and opens your browser using this URL; then you can fiddle with 
+parameters and filtering.
+
+```
+./netiscope -gui
 ```
 
 On Linux, the ping functionality may need '"unprivileged" ping via UDP" permission:
@@ -113,6 +120,7 @@ See `netiscope.ini` for details. This configuration is loaded on start. It can b
 specified via the `-c` parameter, from `./netiscope.ini`, or from `~/.config/netiscope.ini`.
 
 Notable command line options:
+  * `-gui` opens a GUI instead of terminal output
   * `-c CONFIG` specifies a config file
   * `-C CIDRFILE` specifies a provider CIDR list file
   * `-s SECTION` specifies a configuration section list sthe checks to execute instead of `checks`
