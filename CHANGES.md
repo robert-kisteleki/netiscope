@@ -9,6 +9,7 @@ next
   * NEW: run a specific test only
   * NEW: show progress in verbose mode
   * NEW: GUI (start with `-gui`)
+  * NEW: add `-version` to options
 
 0.5.20231118
   * updated to go1.21

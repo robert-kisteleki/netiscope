@@ -120,6 +120,7 @@ See `netiscope.ini` for details. This configuration is loaded on start. It can b
 specified via the `-c` parameter, from `./netiscope.ini`, or from `~/.config/netiscope.ini`.
 
 Notable command line options:
+  * `-version` shows the current version
   * `-gui` opens a GUI instead of terminal output
   * `-c CONFIG` specifies a config file
   * `-C CIDRFILE` specifies a provider CIDR list file
