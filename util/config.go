@@ -27,6 +27,7 @@ var (
 	flagVerbose   bool
 	flagRunCheck  string
 	flagGui       bool
+	flagVersion   bool
 	GuiIPv4       bool
 	GuiIPv6       bool
 
@@ -52,6 +53,7 @@ func SetupFlags() {
 	flag.BoolVar(&flagVerbose, "v", false, "Be verbose reporting progress")
 	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
 	flag.BoolVar(&flagGui, "gui", false, "Start with a browser GUI")
+	flag.BoolVar(&flagVersion, "version", false, "Show version")
 
 	flag.Parse()
 }
@@ -207,6 +209,10 @@ func Verbose() bool {
 
 func StartGui() bool {
 	return flagGui || cfg.Section("main").Key("gui").MustBool(false)
+}
+
+func VersionFlag() bool {
+	return flagVersion
 }
 
 // check which file exists, from a list of candidates in order of preference

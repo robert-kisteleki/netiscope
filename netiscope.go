@@ -8,6 +8,7 @@
 package main
 
 import (
+	"fmt"
 	"netiscope/checks"
 	"netiscope/log"
 	"netiscope/util"
@@ -15,6 +16,12 @@ import (
 
 func main() {
 	util.SetupFlags()
+
+	if util.VersionFlag() {
+		fmt.Println(util.Version)
+		return
+	}
+
 	util.ReadConfig()
 	util.ReadCIDRConfig()
 	log.SetLogLevel(util.GetLogLevel(), util.Verbose())
