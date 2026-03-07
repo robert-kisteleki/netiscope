@@ -102,7 +102,7 @@ func CheckDNSOverHTTPSProviders(check *log.Check) {
 		}
 	}
 
-	log.NewResultItem(check, log.LevelDetail, "FINISH", "Finished")
+	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
 }
 
 // given a format, the provider's base URL and the parameters, build the DoH query URL

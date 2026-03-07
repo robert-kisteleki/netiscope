@@ -50,7 +50,7 @@ func CheckDNSRootServers(check *log.Check) {
 
 	// TODO: compare responses from different root servers?
 
-	log.NewResultItem(check, log.LevelDetail, "FINISH", "Finished")
+	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
 }
 
 // check a particular DNS root server on IPv4 or IPv6

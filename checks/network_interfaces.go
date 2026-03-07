@@ -39,24 +39,28 @@ func CheckNetworkInterfaces(check *log.Check) {
 
 	// any useful IPv4 addresses found?
 	if !util.SkipIPv4() && !IPv4Unicast {
-		log.NewResultItem(check, log.LevelWarning, "NO_IPV4", "No routable IPv4 addresses found, disabling IPv4 checks")
+		log.NewResultItem(check, log.LevelWarning, "NO_IPV4", "No routable IPv4 addresses found")
 		util.SetFailedIPv4()
 	}
 
 	// any useful addresses IPv6 found?
 	if !util.SkipIPv6() && !IPv6Unicast {
-		log.NewResultItem(check, log.LevelWarning, "NO_IPV6", "No routable IPv6 addresses found, disabling IPv6 checks")
+		log.NewResultItem(check, log.LevelWarning, "NO_IPV6", "No routable IPv6 addresses found")
 		util.SetFailedIPv6()
 	}
 
 	// any useful addresses found at all?
 	if !IPv4Unicast && !IPv6Unicast {
-		log.NewResultItem(check, log.LevelError, "NO_ROUTABLE", "No routable addresses found")
+		if util.SkipIPv4() && util.SkipIPv6() {
+			log.NewResultItem(check, log.LevelWarning, "NO_CHECK", "No checks to do (IPv4 and IPv6 checks are disabled)")
+		} else {
+			log.NewResultItem(check, log.LevelError, "NO_ROUTABLE", "No routable addresses found")
+		}
 	}
 
 	// TODO: check if the gateway(s) is/are reachable?
 
-	log.NewResultItem(check, log.LevelDetail, "FINISH", "Finished")
+	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
 }
 
 // evaluateAddr checks if a given address seems to be useful
