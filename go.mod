@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/go-ini/ini v1.67.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/miekg/dns v1.1.70
+	github.com/miekg/dns v1.1.72
 	github.com/prometheus-community/pro-bing v0.8.0
 )
 
