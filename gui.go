@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"netiscope/log"
 	"netiscope/util"
+	"runtime"
 
 	"github.com/gorilla/websocket"
 )
@@ -44,7 +45,7 @@ func runGui() {
 func guiControlGetVersion(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	b := makeGuiControlResponse(guiResponse{Code: "OK", Message: "OK", Params: util.Version})
+	b := makeGuiControlResponse(guiResponse{Code: "OK", Message: "OK", Params: util.Version + " (" + runtime.Version() + ")"})
 	fmt.Fprint(w, string(b))
 }
 
