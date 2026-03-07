@@ -24,6 +24,7 @@ var (
 		"dns_root_servers":    CheckDNSRootServers,
 		"port_filtering":      CheckPortFiltering,
 		"doh_providers":       CheckDNSOverHTTPSProviders,
+		"ssh_host_keys":       CheckSSHHostKeys,
 	}
 )
 

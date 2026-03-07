@@ -203,6 +203,11 @@ func GetDoHProviders() [][]string {
 	return splitConfigKeyList("doh", "provider")
 }
 
+// GetTargetsToSSHCheck returns the list of [target,hostkey] to check for ssh mitm presence
+func GetTargetsToSSHCheck() [][]string {
+	return splitConfigKeyList("ssh_host_keys", "server")
+}
+
 func Verbose() bool {
 	return flagVerbose
 }

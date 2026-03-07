@@ -9,6 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/miekg/dns v1.1.72
 	github.com/prometheus-community/pro-bing v0.8.0
+	golang.org/x/crypto v0.47.0
 )
 
 require (
