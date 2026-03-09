@@ -13,12 +13,11 @@ import (
 // Ping (duh) a specific target using our favourite library
 // return a ReultCode
 func Ping(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	target string,
 	mnemo string,
 ) (result ResultCode) {
-	log.NewResultItem(
-		check,
+	check.Log(
 		log.LevelInfo,
 		fmt.Sprintf("PING_%s", mnemo),
 		fmt.Sprintf("Pinging %s", target),
@@ -31,8 +30,7 @@ func Ping(
 	}
 
 	pinger.OnRecv = func(pkt *probing.Packet) {
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelDetail,
 			"PING_PACKET",
 			fmt.Sprintf(
@@ -44,16 +42,14 @@ func Ping(
 
 	pinger.OnFinish = func(stats *probing.Statistics) {
 		packetloss = stats.PacketLoss
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelDetail,
 			"PING_RESULTS",
 			fmt.Sprintf(
 				"%d packets transmitted, %d packets received, %v%% packet loss",
 				stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss),
 		)
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelDetail,
 			"PING_STATS",
 			fmt.Sprintf(
@@ -68,24 +64,21 @@ func Ping(
 
 	switch {
 	case packetloss == 0.0:
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelInfo,
 			fmt.Sprintf("PING_%s_WORKS", mnemo),
 			fmt.Sprintf("Server %s is reachable", target),
 		)
 		return ResultSuccess
 	case packetloss == 100.0:
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelWarning,
 			fmt.Sprintf("PING_%s_FAILS", mnemo),
 			fmt.Sprintf("Server %s is not reachable", target),
 		)
 		return ResultFailure
 	default:
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelWarning,
 			fmt.Sprintf("PING_%s_WARNING", mnemo),
 			fmt.Sprintf("Server %s shows packet loss", target),
@@ -97,7 +90,7 @@ func Ping(
 // PingServers pings a set of servers
 // return a MultipleResult
 func PingServers(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	mnemo string,
 	resolvers []string,
 ) (outcollector MultipleResult) {

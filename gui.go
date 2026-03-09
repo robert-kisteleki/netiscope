@@ -34,6 +34,7 @@ func runGui() {
 	http.HandleFunc("/api/version", guiControlGetVersion)
 	http.HandleFunc("/api/control/checks", guiControlListChecks)
 	http.HandleFunc("/api/control/start", guiControlStart)
+	http.HandleFunc("/api/control/stop", guiControlStop)
 	http.Handle("/api/results/", resultsWsHandle{upgrader: websocket.Upgrader{}})
 
 	util.OpenBrowser("http://localhost:8080/")
@@ -76,6 +77,22 @@ func guiControlStart(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, string(
 		makeGuiControlResponse(guiResponse{Code: "OK", Message: "Started", Params: nil})),
+	)
+}
+
+func guiControlStop(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("GUI: sending STOP signal")
+	abortChecks()
+
+	fmt.Fprint(w, string(
+		makeGuiControlResponse(guiResponse{Code: "OK", Message: "Stopped", Params: nil})),
 	)
 }
 

@@ -5,80 +5,98 @@ import (
 	"netiscope/log"
 	"netiscope/util"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
 )
 
-type checkFunction func(*log.Check)
+type NetiscopeCheck interface {
+	Start()
+	Stop()
+	Log(level log.LogLevelType, mnemonic string, details string)
+}
 
-var (
-	// what checks are available
-	knownChecks = map[string]checkFunction{
-		"network_interfaces":  CheckNetworkInterfaces,
-		"dns_local_resolvers": CheckLocalDNSResolvers,
-		"dns_open_resolvers":  CheckOpenDNSResolvers,
-		"1111":                CheckCloudflareDNS,
-		"8888":                CheckGoogleDNS,
-		"9999":                CheckQuad9DNS,
-		"dns_root_servers":    CheckDNSRootServers,
-		"port_filtering":      CheckPortFiltering,
-		"doh_providers":       CheckDNSOverHTTPSProviders,
-		"ssh_host_keys":       CheckSSHHostKeys,
+type netiscopeCheckBase struct {
+	Name string
+}
+
+func (check *netiscopeCheckBase) Stop() {
+}
+
+func (check *netiscopeCheckBase) Log(
+	level log.LogLevelType,
+	mnemonic string,
+	details string,
+) {
+	finding := log.NewFinding(check.Name, level, mnemonic, details)
+	log.AllResults <- finding
+}
+
+// what checks are available
+var knownChecks []string = []string{
+	"network_interfaces",
+	"dns_local_resolvers",
+	"dns_open_resolver_1111",
+	"dns_open_resolver_8888",
+	"dns_open_resolver_9999",
+	"dns_root_servers",
+	"port_filtering",
+	"doh_providers",
+	"ssh_host_keys",
+}
+
+type NetiscopeAdminCheck struct {
+	netiscopeCheckBase
+}
+
+func (check NetiscopeAdminCheck) Start() {
+}
+
+var AdminCheck NetiscopeAdminCheck
+
+func init() {
+	AdminCheck = NetiscopeAdminCheck{
+		netiscopeCheckBase: netiscopeCheckBase{
+			Name: "admin",
+		},
 	}
-)
+}
+
+var runningChecks []NetiscopeCheck
 
 // ExecuteChecks runs all the defined checks
-func ExecuteChecks(checksToDo []string, print bool) {
+func ExecuteChecks(checksToDo []string) {
 	if len(checksToDo) == 0 {
-		fmt.Println("No checks defined")
+		AdminCheck.Log(log.LevelWarning, "NO_CHECKS", "No checks defined")
 		return
 	}
 
 	var wg sync.WaitGroup
-	var mutex sync.Mutex
-	checkCounter := make(map[string]int)
-	checks := make([]*log.Check, 0)
-	for i := 0; i < len(checksToDo); i++ {
+	runningChecks = make([]NetiscopeCheck, 0)
+	for i := range checksToDo {
 		checkName := checksToDo[i]
-		checkFunction, found := knownChecks[checkName]
+		check, found := initializeCheckByName(checkName)
 		if found {
-			results := make([]log.ResultItem, 0)
-			tracker := make(chan string)
 			wg.Add(1)
-			check := &log.Check{Name: checkName, Collector: results, Tracker: tracker}
-			checks = append(checks, check)
+			runningChecks = append(runningChecks, check)
 
-			go checkFunction(check)
-			go func(c <-chan string) {
-				for tick := range c {
-					mutex.Lock()
-					checkCounter[tick]++
-					showProgress(checkCounter)
-					mutex.Unlock()
-				}
-				wg.Done()
-			}(tracker)
+			go func(check NetiscopeCheck) {
+				defer wg.Done()
+				check.Start()
+			}(check)
 		} else {
-			log.NewResultItem(log.AdminCheck, log.LevelAdmin, "NO_CHECK",
-				fmt.Sprintf("No such check: %s", checksToDo[i]),
-			)
+			AdminCheck.Log(log.LevelAdmin, "NO_SUCH_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i]))
 		}
 	}
 	wg.Wait()
+}
 
-	if util.Verbose() {
-		fmt.Println()
-	}
-
+func PrintResults() {
 	levelCounter := make([]int, 7)
-	for _, check := range checks {
-		for _, msg := range check.Collector {
-			if print {
-				log.PrintResultItem(msg)
-			}
-			levelCounter[msg.Level]++
-		}
+	for data := range log.AllResults {
+		log.PrintResultItem(data)
+		levelCounter[data.Level]++
 	}
 
 	summary := fmt.Sprintf(
@@ -88,7 +106,54 @@ func ExecuteChecks(checksToDo []string, print bool) {
 		levelCounter[log.LevelWarning],
 		levelCounter[log.LevelError],
 	)
-	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SUMMARY", summary)
+	log.PrintResultItem(log.NewFinding("admin", log.LevelAdmin, "SUMMARY", summary))
+}
+
+func initializeCheckByName(name string) (NetiscopeCheck, bool) {
+	data := netiscopeCheckBase{Name: name}
+	var check NetiscopeCheck
+	switch name {
+	case "network_interfaces":
+		check = &NetworkInterfacesCheck{netiscopeCheckBase: data}
+	case "dns_local_resolvers":
+		check = &DNSLocalResolversCheck{netiscopeCheckBase: data}
+	case "dns_open_resolver_1111":
+		check = &DNSCloudflareOpenResolverCheck{netiscopeCheckBase: data}
+	case "dns_open_resolver_8888":
+		check = &DNSGoogleOpenResolverCheck{netiscopeCheckBase: data}
+	case "dns_open_resolver_9999":
+		check = &DNSQuad9OpenResolverCheck{netiscopeCheckBase: data}
+	case "dns_root_servers":
+		check = &DNSRootServersCheck{netiscopeCheckBase: data}
+	case "port_filtering":
+		check = &PortFilteringCheck{netiscopeCheckBase: data}
+	case "doh_providers":
+		check = &DNSOverHTTPSProvidersCheck{netiscopeCheckBase: data}
+	case "ssh_host_keys":
+		check = &SSHHostKeysCheck{netiscopeCheckBase: data}
+	default:
+		return nil, false
+	}
+	return check, true
+}
+
+func Start() {
+	AdminCheck.Log(log.LevelAdmin, "START", fmt.Sprintf("Started (version %s, %s)", util.Version, runtime.Version()))
+}
+
+func Finish(closeChannel bool) {
+	AdminCheck.Log(log.LevelAdmin, "FINISH", "Finished")
+	if closeChannel {
+		close(log.AllResults)
+	}
+}
+
+func Abort() {
+	AdminCheck.Log(log.LevelAdmin, "ABORT", "Aborting checks")
+	for _, check := range runningChecks {
+		fmt.Println("checks: stopping", check)
+		check.Stop()
+	}
 }
 
 func showProgress(tracks map[string]int) {
@@ -108,14 +173,31 @@ func showProgress(tracks map[string]int) {
 	fmt.Fprintf(os.Stderr, "PROGRESS=%s", strings.Join(progress, "/"))
 }
 
-func Start() {
-	log.CreateAdminCheck()
-	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "START", fmt.Sprintf("Started (version %s)", util.Version))
-}
-
-func Finish(closeChannel bool) {
-	log.NewResultItem(log.AdminCheck, log.LevelAdmin, "FINISH", "Finished")
-	if closeChannel {
-		close(log.AllResults)
+// CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
+func CheckIPForProvider(
+	check *netiscopeCheckBase,
+	ip string,
+	provider string,
+) {
+	known, contains := util.IsIPInProviderCIDRBlock(ip, provider)
+	switch {
+	case !known:
+		check.Log(
+			log.LevelInfo,
+			"PROVIDER_CIDR_UNKNOWN",
+			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
+		)
+	case known && contains:
+		check.Log(
+			log.LevelInfo,
+			"PROVIDER_CIDR_OK",
+			fmt.Sprintf("The IP %s is in the CIDR block list for %s", ip, provider),
+		)
+	case known && !contains:
+		check.Log(
+			log.LevelWarning,
+			"PROVIDER_CIDR_NOT_OK",
+			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
+		)
 	}
 }

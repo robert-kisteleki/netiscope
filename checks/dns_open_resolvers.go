@@ -6,90 +6,77 @@ import (
 	"netiscope/util"
 )
 
-// CheckOpenDNSResolvers checks all (defined) open DNS resolvers
-// it's basically a shorthand for doing checks against the predefined open resolvers
-func CheckOpenDNSResolvers(check *log.Check) {
-	defer close(check.Tracker)
-	checkGoogleDNS(check)
-	checkCloudflareDNS(check)
-	checkQuad9DNS(check)
-	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
+type DNSGoogleOpenResolverCheck struct {
+	netiscopeCheckBase
+}
+type DNSCloudflareOpenResolverCheck struct {
+	netiscopeCheckBase
+}
+type DNSQuad9OpenResolverCheck struct {
+	netiscopeCheckBase
 }
 
 // CheckGoogleDNS checks Google's open resolver
-func CheckGoogleDNS(check *log.Check) {
-	defer close(check.Tracker)
-	checkGoogleDNS(check)
-	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
-}
-func checkGoogleDNS(check *log.Check) {
+func (check *DNSGoogleOpenResolverCheck) Start() {
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Google",
 		"IPv4",
 		[]string{"8.8.8.8", "8.8.4.4"},
 	)
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Google",
 		"IPv6",
 		[]string{"2001:4860:4860::8888", "2001:4860:4860::8844"},
 	)
+	check.Log(log.LevelInfo, "FINISH", "Finished")
 }
 
 // CheckCloudflareDNS checks Cloudflare's open resolver
-func CheckCloudflareDNS(check *log.Check) {
-	defer close(check.Tracker)
-	checkCloudflareDNS(check)
-	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
-}
-
-func checkCloudflareDNS(check *log.Check) {
+func (check *DNSCloudflareOpenResolverCheck) Start() {
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Cloudflare",
 		"IPv4",
 		[]string{"1.1.1.1", "1.0.0.1"},
 	)
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Cloudflare",
 		"IPv6",
 		[]string{"2606:4700:4700::1111", "2606:4700:4700::1001"},
 	)
+	check.Log(log.LevelInfo, "FINISH", "Finished")
 }
 
 // CheckQuad9DNS checks Quad9's open resolver
-func CheckQuad9DNS(check *log.Check) {
-	defer close(check.Tracker)
-	checkQuad9DNS(check)
-	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
-}
-
-func checkQuad9DNS(check *log.Check) {
+func (check *DNSQuad9OpenResolverCheck) Start() {
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv4",
 		[]string{"9.9.9.9"},
 	)
 	checkOpenResolver(
-		check,
+		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv6",
 		[]string{"2620:fe::fe", "2620:fe::9", "2620:fe::10", "2620:fe::fe:10", "2620:fe::11", "2620:fe::fe:11"},
 	)
+	check.Log(log.LevelInfo, "FINISH", "Finished")
 }
 
 func checkOpenResolver(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	provider string,
 	af string,
 	resolvers []string,
 ) {
 	if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
-		log.NewResultItem(
-			check, log.LevelInfo, "CKECKING_OPEN_DNS_RESOLVER",
+		check.Log(
+			log.LevelInfo,
+			"CKECKING_OPEN_DNS_RESOLVER",
 			fmt.Sprintf(
 				"Checking %s's %s resolvers %v",
 				provider, af, resolvers,

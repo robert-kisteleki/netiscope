@@ -1,10 +1,8 @@
 package util
 
 import (
-	"fmt"
 	"math/big"
 	"net"
-	"netiscope/log"
 	"strings"
 )
 
@@ -89,7 +87,7 @@ func IsIPv4DCHP(ip string) bool {
 // @return
 // is-provider-cidr-list-known?
 // is-ip-in-provider-cidr-list?
-func isIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
+func IsIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
 	cidrs, ok := cidrProviders[provider]
 	if !ok {
 		return false, false
@@ -100,30 +98,4 @@ func isIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
 		ip = net.IPv4(b[11], b[12], b[13], b[14]).String()
 	}
 	return true, IsInCIDRList(ip, cidrs)
-}
-
-// CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
-func CheckIPForProvider(
-	check *log.Check,
-	ip string,
-	provider string,
-) {
-	known, contains := isIPInProviderCIDRBlock(ip, provider)
-	switch {
-	case !known:
-		log.NewResultItem(
-			check, log.LevelInfo, "PROVIDER_CIDR_UNKNOWN",
-			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
-		)
-	case known && contains:
-		log.NewResultItem(
-			check, log.LevelInfo, "PROVIDER_CIDR_OK",
-			fmt.Sprintf("The IP %s is in the CIDR block list for %s", ip, provider),
-		)
-	case known && !contains:
-		log.NewResultItem(
-			check, log.LevelWarning, "PROVIDER_CIDR_NOT_OK",
-			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
-		)
-	}
 }

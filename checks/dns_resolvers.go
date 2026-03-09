@@ -11,7 +11,7 @@ import (
 // query the predefined list of names from a set of resolvers
 // return a MultipleResult
 func queryNamesFromResolvers(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	rtype string,
 	resolvers []string,
 ) (out MultipleResult) {
@@ -19,13 +19,11 @@ func queryNamesFromResolvers(
 	// the names to look up are in the config file
 	names := util.GetDNSNamesToLookup()
 	if len(names) == 0 {
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelFatal,
 			fmt.Sprintf("%s_NO_NAMES", strings.ToUpper(rtype)),
 			"The list of names to look up is empty",
 		)
-		log.Track(check)
 		return
 	}
 
@@ -35,7 +33,6 @@ func queryNamesFromResolvers(
 		var resolverResults MultipleResult
 		for _, name := range names {
 			resolverResults[queryNameFromResolver(check, name, resolver)]++
-			log.Track(check)
 		}
 
 		// now evaluate this resolver by looking at the the collected results
@@ -43,30 +40,26 @@ func queryNamesFromResolvers(
 		switch {
 		case resolverResults[ResultSuccess] == 0 && resolverResults[ResultFailure] > 0:
 			out[ResultFailure]++
-			log.NewResultItem(
-				check,
+			check.Log(
 				log.LevelError,
 				fmt.Sprintf("QUERY_%s_FAILS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s is not answering queries", resolver),
 			)
 		case resolverResults[ResultSuccess] > 0 && resolverResults[ResultFailure] > 0:
 			out[ResultPartial]++
-			log.NewResultItem(
-				check,
+			check.Log(
 				log.LevelWarning,
 				fmt.Sprintf("QUERY_%s_FLAKY", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s failed to answer some queries", resolver),
 			)
 		case resolverResults[ResultSuccess] > 0 && resolverResults[ResultFailure] == 0:
 			out[ResultSuccess]++
-			log.NewResultItem(
-				check,
+			check.Log(
 				log.LevelInfo,
 				fmt.Sprintf("QUERY_%s_WORKS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s answered all queries", resolver),
 			)
 		}
-		log.Track(check)
 	}
 	return
 }
@@ -74,7 +67,7 @@ func queryNamesFromResolvers(
 // ask one resolver for one query
 // return ResultCode to indicate if it was successful
 func queryNameFromResolver(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	name string,
 	resolver string,
 ) ResultCode {
@@ -84,7 +77,7 @@ func queryNameFromResolver(
 	if !util.SkipIPv4() {
 		answersA, err = DNSQuery(check, name, "A", resolver, false, true, true, false)
 		if err != nil {
-			log.NewResultItem(check, log.LevelError, "RESOLVER_ERROR_A", err.Error())
+			check.Log(log.LevelError, "RESOLVER_ERROR_A", err.Error())
 			return ResultFailure
 		}
 	}
@@ -92,14 +85,13 @@ func queryNameFromResolver(
 	if !util.SkipIPv6() {
 		answersAAAA, err = DNSQuery(check, name, "AAAA", resolver, false, true, true, false)
 		if err != nil {
-			log.NewResultItem(check, log.LevelError, "RESOLVER_ERROR_AAAA", err.Error())
+			check.Log(log.LevelError, "RESOLVER_ERROR_AAAA", err.Error())
 			return ResultFailure
 		}
 	}
 
 	if len(answersA)+len(answersAAAA) == 0 {
-		log.NewResultItem(
-			check,
+		check.Log(
 			log.LevelError,
 			"RESOLVER_ZERO_ANSWER",
 			fmt.Sprintf("Resolver %s gave no answers to query %s", resolver, name),
@@ -109,8 +101,7 @@ func queryNameFromResolver(
 
 	answers := append(answersA["A"], answersAAAA["AAAA"]...)
 
-	log.NewResultItem(
-		check,
+	check.Log(
 		log.LevelInfo,
 		"RESOLVER_ANSWERS",
 		fmt.Sprintf("Resolver %s's answer(s) to query %s is: %v", resolver, name, answers),
@@ -118,8 +109,7 @@ func queryNameFromResolver(
 
 	// verify if answers are in predefined known CIDR ranges
 	for _, ip := range answers {
-		util.CheckIPForProvider(check, fmt.Sprint(ip), name)
-		log.Track(check)
+		CheckIPForProvider(check, fmt.Sprint(ip), name)
 	}
 
 	return ResultSuccess
@@ -131,7 +121,7 @@ func queryNameFromResolver(
 // kind: which kind of resolver are we testing (local or open)
 // resolvers: the resolvers to test
 func testResolversOnAddressFamily(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	mnemo string,
 	af string,
 	kind string,
@@ -142,14 +132,12 @@ func testResolversOnAddressFamily(
 			check, mnemo, af, kind, "PING", "reachable", resolvers,
 			PingServers(check, mnemo, resolvers),
 		)
-		log.Track(check)
 	}
 	if shouldCheckDNSFunction("query") {
 		reportResolversOnAddressFamily(
 			check, mnemo, af, kind, "QUERY", "answering", resolvers,
 			queryNamesFromResolvers(check, mnemo, resolvers),
 		)
-		log.Track(check)
 	}
 }
 
@@ -162,7 +150,7 @@ func testResolversOnAddressFamily(
 // resolvers: the resolvers to test
 // results: the results to analyse
 func reportResolversOnAddressFamily(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	mnemo string,
 	af string,
 	kind string,
@@ -177,23 +165,23 @@ func reportResolversOnAddressFamily(
 	}
 	switch {
 	case out[ResultPartial] == 0 && out[ResultFailure] == 0:
-		log.NewResultItem(check, log.LevelInfo,
+		check.Log(
+			log.LevelInfo,
 			fmt.Sprintf("%s_%s_OK", test, mnemo),
 			fmt.Sprintf("%s %s %v %s %s properly", af, kind, resolvers, isare, verb),
 		)
-		log.Track(check)
 	case out[ResultPartial] > 0:
-		log.NewResultItem(check, log.LevelWarning,
+		check.Log(
+			log.LevelWarning,
 			fmt.Sprintf("%s_%s_PARTIAL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s only partially %s", af, kind, resolvers, isare, verb),
 		)
-		log.Track(check)
 	default:
-		log.NewResultItem(check, log.LevelError,
+		check.Log(
+			log.LevelError,
 			fmt.Sprintf("%s_%s_FAIL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s not %s properly", af, kind, resolvers, isare, verb),
 		)
-		log.Track(check)
 	}
 }
 

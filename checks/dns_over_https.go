@@ -12,14 +12,17 @@ import (
 )
 
 // CheckDNSOverHTTPSProviders checks responsiveness of several DoH providers
-func CheckDNSOverHTTPSProviders(check *log.Check) {
-	defer close(check.Tracker)
+type DNSOverHTTPSProvidersCheck struct {
+	netiscopeCheckBase
+}
 
+// Start executes the DoH provider check
+func (check *DNSOverHTTPSProvidersCheck) Start() {
 	// the names to look up are in the config file
 	names := util.GetDNSNamesToLookup()
 	if len(names) == 0 {
-		log.NewResultItem(
-			check, log.LevelFatal, "DOH_NO_NAMES",
+		check.Log(
+			log.LevelFatal, "DOH_NO_NAMES",
 			"The list of names to look up is empty",
 		)
 		return
@@ -36,12 +39,11 @@ func CheckDNSOverHTTPSProviders(check *log.Check) {
 
 			// loop over each name that needs to be looked up
 			for _, name := range names {
-
-				log.NewResultItem(check, log.LevelDetail,
+				check.Log(
+					log.LevelDetail,
 					fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s", af),
 					fmt.Sprintf("Checking for name %s via %s (format: %s) using IPv%s", name, pbase, format, af),
 				)
-				log.Track(check)
 
 				// do A over IPv4 and AAAA over IPv6, which is not perfect but reasonable
 				qtype := "A"
@@ -53,7 +55,7 @@ func CheckDNSOverHTTPSProviders(check *log.Check) {
 				client := &http.Client{}
 				req, err := http.NewRequest("GET", buildDoHQueryURL(check, format, pbase, qtype, name, true), nil)
 				if err != nil {
-					log.NewResultItem(check, log.LevelError, "DOH_PROVIDER_REQUEST_ERROR", fmt.Sprintf("Error: %v", err))
+					check.Log(log.LevelError, "DOH_PROVIDER_REQUEST_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 				switch format {
@@ -64,50 +66,46 @@ func CheckDNSOverHTTPSProviders(check *log.Check) {
 				}
 				resp, err := client.Do(req)
 				if err != nil {
-					log.NewResultItem(
-						check, log.LevelError, "DOH_PROVIDER_GET_ERROR",
-						fmt.Sprintf("Error: %v", err),
-					)
+					check.Log(log.LevelError, "DOH_PROVIDER_GET_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 				defer resp.Body.Close()
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
-					log.NewResultItem(
-						check, log.LevelError, "DOH_PROVIDER_READ_ERROR",
-						fmt.Sprintf("Error: %v", err),
-					)
+					check.Log(log.LevelError, "DOH_PROVIDER_READ_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 
 				// try to extract A and AAAA answers
 				addrs, err := parseDoHResponse(check, format, body)
 				if err != nil {
-					log.NewResultItem(check, log.LevelError,
+					check.Log(
+						log.LevelError,
 						fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s_RESULT_ERROR", af),
 						fmt.Sprintf("Error: %v", err),
 					)
 				}
 
-				log.NewResultItem(check, log.LevelInfo,
+				check.Log(
+					log.LevelInfo,
 					fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s_RESULT_OK", af),
 					fmt.Sprintf("Result for %s: %v", name, addrs),
 				)
 
 				// verify if answers are in predefined known CIDR ranges
 				for _, ip := range addrs {
-					util.CheckIPForProvider(check, fmt.Sprint(ip), name)
+					CheckIPForProvider(&check.netiscopeCheckBase, fmt.Sprint(ip), name)
 				}
 			}
 		}
 	}
 
-	log.NewResultItem(check, log.LevelInfo, "FINISH", "Finished")
+	check.Log(log.LevelInfo, "FINISH", "Finished")
 }
 
 // given a format, the provider's base URL and the parameters, build the DoH query URL
 func buildDoHQueryURL(
-	check *log.Check,
+	check *DNSOverHTTPSProvidersCheck,
 	format string,
 	provider string,
 	qtype string,
@@ -118,7 +116,7 @@ func buildDoHQueryURL(
 	case "json":
 		return fmt.Sprintf("%s?name=%s&type=%s&do=%v", provider, name, qtype, do)
 	case "rfc8484":
-		wire := CreateDNSQuery(check, name, qtype, true, true, true, true)
+		wire := CreateDNSQuery(&check.netiscopeCheckBase, name, qtype, true, true, true, true)
 		return fmt.Sprintf("%s?dns=%s", provider, base64.RawURLEncoding.EncodeToString(wire))
 	default:
 		return ""
@@ -128,22 +126,25 @@ func buildDoHQueryURL(
 // parse a DoH response, with a priori knowledge of what format was used
 // @return a list of parsed addresses or an error
 func parseDoHResponse(
-	check *log.Check,
+	check *DNSOverHTTPSProvidersCheck,
 	format string,
 	responseBytes []byte,
 ) (addrs []string, err error) {
 	switch format {
 	case "json":
-		return parseDoHJSONResponse(responseBytes)
+		return parseDoHJSONResponse(&check.netiscopeCheckBase, responseBytes)
 	case "rfc8484":
-		return parseDoHRFC8484Response(check, responseBytes)
+		return parseDoHRFC8484Response(&check.netiscopeCheckBase, responseBytes)
 	default:
 		return
 	}
 }
 
 // parse a JSON formatted DNS response
-func parseDoHJSONResponse(responseBytes []byte) (addrs []string, err error) {
+func parseDoHJSONResponse(
+	check *netiscopeCheckBase,
+	responseBytes []byte,
+) (addrs []string, err error) {
 	// this could be improved
 	var result map[string]any
 	json.Unmarshal([]byte(responseBytes), &result)
@@ -179,7 +180,7 @@ func parseDoHJSONResponse(responseBytes []byte) (addrs []string, err error) {
 
 // parse an RFC8484 formatted response
 func parseDoHRFC8484Response(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	responseBytes []byte,
 ) (addrs []string, err error) {
 	var parsed map[string][]string

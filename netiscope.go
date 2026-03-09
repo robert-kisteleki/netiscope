@@ -33,20 +33,23 @@ func main() {
 		runGui()
 	} else {
 		go startChecks(util.GetChecks(), true)
-		for data := range log.AllResults {
-			log.PrintResultItem(data)
-		}
+		checks.PrintResults()
 	}
 }
 
-func startChecks(checksToDo []string, printAndClose bool) {
+func startChecks(checksToDo []string, close bool) {
 	checks.Start()
 	if util.SkipIPv4() {
-		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
+		checks.AdminCheck.Log(log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
 	}
 	if util.SkipIPv6() {
-		log.NewResultItem(log.AdminCheck, log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
+		checks.AdminCheck.Log(log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
 	}
-	checks.ExecuteChecks(checksToDo, printAndClose)
-	checks.Finish(printAndClose)
+	checks.ExecuteChecks(checksToDo)
+	checks.Finish(close)
+}
+
+// this is triggered by the GUI
+func abortChecks() {
+	checks.Abort()
 }

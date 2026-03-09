@@ -27,7 +27,7 @@ import (
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // dnserror: code upon error
 func DNSQuery(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	target string,
 	qType string,
 	server string,
@@ -63,8 +63,11 @@ func DNSQuery(
 
 	result = parseDNSResponse(check, response)
 
-	stats := fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, response.Len())
-	log.NewResultItem(check, log.LevelDetail, "DNS_QUERY_STATS", stats)
+	check.Log(
+		log.LevelDetail,
+		"DNS_QUERY_STATS",
+		fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, response.Len()),
+	)
 
 	return
 }
@@ -78,7 +81,7 @@ func DNSQuery(
 // zeroID: use zero as query ID?
 // @return: an assembled DNS query in on-the-wire format
 func CreateDNSQuery(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	target string,
 	qType string,
 	nsid bool,
@@ -99,7 +102,7 @@ func CreateDNSQuery(
 // result: a list of results and options (IPs or SOA or NSID records and such)
 // error code upon error
 func ParseDNSResponse(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	responseBytes []byte,
 ) (result map[string][]string, err error) {
 	var response dns.Msg
@@ -121,7 +124,7 @@ func ParseDNSResponse(
 // zeroID: use zero as query ID?
 // @return: the DNS query (using the type of the underlying DNS package)
 func prepareDNSQuery(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	target string,
 	qType string,
 	nsid bool,
@@ -153,7 +156,11 @@ func prepareDNSQuery(
 	case "NS":
 		qt = dns.TypeNS
 	default:
-		log.NewResultItem(check, log.LevelFatal, "DNS", fmt.Sprintf("Don't know how to query DNS for %s", qType))
+		check.Log(
+			log.LevelFatal,
+			"DNS",
+			fmt.Sprintf("Don't know how to query DNS for %s", qType),
+		)
 		panic(1)
 	}
 
@@ -187,7 +194,7 @@ func prepareDNSQuery(
 // @return:
 // result: a list of results and options (IPs or SOA or NSID records and such)
 func parseDNSResponse(
-	check *log.Check,
+	check *netiscopeCheckBase,
 	response *dns.Msg,
 ) (result map[string][]string) {
 	result = make(map[string][]string)
@@ -203,7 +210,11 @@ func parseDNSResponse(
 		case *dns.NS:
 			result["NS"] = append(result["NS"], t.Ns)
 		default:
-			log.NewResultItem(check, log.LevelFatal, "DNS", fmt.Sprintf("Don't know how to handle result type %v", t))
+			check.Log(
+				log.LevelFatal,
+				"DNS",
+				fmt.Sprintf("Don't know how to handle result type %v", t),
+			)
 			fmt.Fprintf(os.Stderr, "Don't know how to handle result type (%s)\n", answer.Header())
 			panic(1)
 		}

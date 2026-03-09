@@ -59,23 +59,7 @@ type ResultItem struct {
 	Timestamp string       `json:"timestamp"`
 }
 
-type Check struct {
-	Name      string
-	Collector []ResultItem
-	Tracker   chan string
-}
-
 var AllResults chan ResultItem
-var AdminCheck *Check
-
-// CreateAdminCheck creates a check that collects admin messages
-func CreateAdminCheck() {
-	AdminCheck = &Check{
-		Name:      "admin",
-		Collector: make([]ResultItem, 0),
-		Tracker:   make(chan string),
-	}
-}
 
 // NewFinding logs one finding
 func NewFinding(check string, level LogLevelType, mnemonic string, details string) ResultItem {
@@ -89,12 +73,6 @@ func NewFinding(check string, level LogLevelType, mnemonic string, details strin
 	}
 }
 
-func NewResultItem(check *Check, level LogLevelType, mnemonic string, details string) {
-	finding := NewFinding(check.Name, level, mnemonic, details)
-	check.Collector = append(check.Collector, finding)
-	AllResults <- finding
-}
-
 func PrintResultItem(finding ResultItem) {
 	level := finding.Level
 	if (level == LevelFatal) || (level == LevelTodo) ||
@@ -105,8 +83,8 @@ func PrintResultItem(finding ResultItem) {
 		(level == LevelDetail && LogLevel == 0) {
 
 		fmt.Print(finding.Timestamp)
-		fmt.Printf("\t%s", level.String())
 		fmt.Printf("\t%s", finding.Check)
+		fmt.Printf("\t%s", level.String())
 		fmt.Printf("\t%s", finding.Mnemonic)
 		if finding.Details != "" {
 			fmt.Printf("\t%s", finding.Details)
@@ -133,8 +111,4 @@ func DurationToHuman(duration time.Duration) string {
 	default:
 		return fmt.Sprintf("%dm %ds", minute, second)
 	}
-}
-
-func Track(check *Check) {
-	check.Tracker <- check.Name
 }
