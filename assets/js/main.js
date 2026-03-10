@@ -1,6 +1,7 @@
 var checksList
 var checkStatuses = {}
 var severity = "warning"
+var textfilter = ""
 
 // format an incoming result, deal with counters and related administration
 function handleIncomingResult(data) {
@@ -20,9 +21,10 @@ function handleIncomingResult(data) {
 	if( data.mnemonic.endsWith("FINISH") ) {
 		finishCheck(check_name);
 		if( check_name == "admin" ) {
-			$("#startbutton").html(`Start checks`);
+			$("#startbutton").html(`Start`);
 			$("#startbutton").prop("disabled", false);
 			$("#stopbutton").prop("disabled", true);
+			$("#stopbutton").html(`Stop`);
 		}
 	}
 }
@@ -52,35 +54,11 @@ $.when( $.ready ).then(function() {
 		handleIncomingResult(event.data);
 	};
 
-	// handler for severity filter changes
-	$("#severity_filter").on('change', function() {
-		severity = $(this).val();
-		switch(severity) {
-		case "all":
-			$(".result_level_detail").show();
-			$(".result_level_info").show();
-			$(".result_level_warning").show();
-			break;
-		case "info":
-			$(".result_level_detail").hide();
-			$(".result_level_info").show();
-			$(".result_level_warning").show();
-			break;
-		case "warning":
-			$(".result_level_detail").hide();
-			$(".result_level_info").hide();
-			$(".result_level_warning").show();
-			break;
-		default:
-			$(".result_level_detail").hide();
-			$(".result_level_info").hide();
-			$(".result_level_warning").hide();
-		}
-	});
-
-	// handler for start button click
-	$("#startbutton").on("click", startChecks)
-	$("#stopbutton").on("click", stopChecks)
+	// handlers for buttons and input field changes
+	$("#severity_filter").on('change', filterChanged);
+	$("#textfilter").on("input", filterChanged);
+	$("#startbutton").on("click", startChecks);
+	$("#stopbutton").on("click", stopChecks);
 });
 
 // show the list of available checks together with checkboxes
@@ -114,9 +92,7 @@ function stopChecks() {
 		headers: {"Content-Type": "application/json"},
 	});
 
-	$("#startbutton").html(`Start checks`);
-	$("#startbutton").prop("disabled", false);
-	$("#stopbutton").prop("disabled", true);
+	$("#stopbutton").html(`Stopping <span class="spinner-border spinner-border-sm"></span>`);
 }
 
 // start the selected checks upon clicking the start button
@@ -156,7 +132,7 @@ function startChecks() {
 	});
 
 	// prevent double-clicking the button
-	$("#startbutton").html(`<span>Running...</span> <span class="spinner-border spinner-border-sm"></span>`);
+	$("#startbutton").html(`<span>Running</span> <span class="spinner-border spinner-border-sm"></span>`);
 	$("#startbutton").prop("disabled", true);
 	$("#stopbutton").prop("disabled", false);
 }
@@ -187,20 +163,62 @@ return `
 `;
 }
 
+function filterChanged() {
+	// severity filter
+	severity = $("#severity_filter").val();
+	switch(severity) {
+	case "all":
+		$(".result_level_detail").show();
+		$(".result_level_info").show();
+		$(".result_level_warning").show();
+		break;
+	case "info":
+		$(".result_level_detail").hide();
+		$(".result_level_info").show();
+		$(".result_level_warning").show();
+		break;
+	case "warning":
+		$(".result_level_detail").hide();
+		$(".result_level_info").hide();
+		$(".result_level_warning").show();
+		break;
+	default:
+		$(".result_level_detail").hide();
+		$(".result_level_info").hide();
+		$(".result_level_warning").hide();
+	}
+
+	// free text filter
+	textfilter = $("#textfilter").val().toLowerCase();
+	$(".filter-here").each(function() {
+		if( textfilter.length==0 || $(this).text().toLowerCase().includes(textfilter) ) {
+			$(this).parent().show();
+		} else {
+			$(this).parent().hide();
+		}
+	})
+}
+
 // format a result for display in the results table
 function formatResult(data) {
-	// when we add one, it should only be shown if the severity matches the filter
+	// when we add one, it should only be shown if it passes the severity filter
+	// and the content matches the free text filter
 	disp =
 		severity=="all" || 
 		(severity=="info" && data.level>=1) ||
 		(severity=="warning" && data.level>=2) ||
 		(severity=="error" && data.level>=3);
+	disp &= textfilter.length==0 ||
+		data.mnemonic.toLowerCase().includes(textfilter) ||
+		data.details.toLowerCase().includes(textfilter);
 
 		return `
 <div class="row result_level_`+levelToName(data.level)+`" `+(disp ? "" : "style='display:none;'")+`>
-	<div class="col-sm-2">`+data.timestamp.slice("YYYY-MM-DDT".length)+`</div>
-	<div class="col-sm-3 text-truncate">`+data.mnemonic+`</div>
-	<div class="col-sm-7">`+data.details+`</div>
+  <div class="col"><div class="row">
+		<div class="col-sm-2">`+data.timestamp.slice("YYYY-MM-DDT".length)+`</div>
+		<div class="col-sm-3 text-truncate filter-here">`+data.mnemonic+`</div>
+		<div class="col-sm-7 filter-here">`+data.details+`</div>
+	</div></div>
 </div>`;
 }
 
