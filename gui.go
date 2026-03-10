@@ -37,10 +37,10 @@ func runGui() {
 	http.HandleFunc("/api/control/stop", guiControlStop)
 	http.Handle("/api/results/", resultsWsHandle{upgrader: websocket.Upgrader{}})
 
-	util.OpenBrowser("http://localhost:8080/")
+	util.OpenBrowser("http://" + util.GetListenHostPort() + "/")
 
 	// start serving
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(util.GetListenHostPort(), nil)
 }
 
 func guiControlGetVersion(w http.ResponseWriter, r *http.Request) {

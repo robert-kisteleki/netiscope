@@ -27,6 +27,7 @@ var (
 	flagVerbose   bool
 	flagRunCheck  string
 	flagGui       bool
+	flagListen    string
 	flagVersion   bool
 	flagJSON      bool
 	GuiIPv4       bool
@@ -45,7 +46,7 @@ func SetupFlags() {
 	}
 	flag.StringVar(&flagConfig, "c", "", "Use this config file")
 	flag.StringVar(&flagCIDR, "C", "", "Use this CIDR file")
-	flag.StringVar(&flagSection, "s", "checks", "Which section lists the checks to execute. Default is 'checks'.")
+	flag.StringVar(&flagSection, "s", "checks", "Which section lists the checks to execute")
 	flag.BoolVar(&flagSkipIPv4, "skip4", false, "Skip IPv4 checks")
 	flag.BoolVar(&flagSkipIPv6, "skip6", false, "Skip IPv6 checks")
 	flag.BoolVar(&flagForceIPv4, "force4", false, "Force IPv4 checks even if no usable local IPv4 addresses are found")
@@ -54,6 +55,7 @@ func SetupFlags() {
 	flag.BoolVar(&flagVerbose, "v", false, "Be verbose reporting progress")
 	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
 	flag.BoolVar(&flagGui, "gui", false, "Start with a browser GUI")
+	flag.StringVar(&flagListen, "listen", "localhost:8080", "What host:port to listen on for the GUI")
 	flag.BoolVar(&flagVersion, "version", false, "Show version")
 	flag.BoolVar(&flagJSON, "json", false, "Output results in JSON format")
 
@@ -257,4 +259,8 @@ func GetLogLevel() string {
 
 func UseJSONFormat() bool {
 	return flagJSON
+}
+
+func GetListenHostPort() string {
+	return flagListen
 }

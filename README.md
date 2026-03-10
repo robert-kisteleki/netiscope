@@ -127,6 +127,7 @@ specified via the `-c` parameter, from `./netiscope.ini`, or from `~/.config/net
 Notable command line options:
   * `-version` shows the current version
   * `-gui` opens a GUI instead of terminal output
+  * `-listen host:port` to change where the GUI server should listen. Default is `localhost:8080`
   * `-c CONFIG` specifies a config file
   * `-C CIDRFILE` specifies a provider CIDR list file
   * `-s SECTION` specifies a configuration section list sthe checks to execute instead of `checks`
