@@ -56,13 +56,13 @@ func (check *DNSQuad9OpenResolverCheck) Start() {
 		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv4",
-		[]string{"9.9.9.9"},
+		[]string{"9.9.9.9", "149.112.112.112"},
 	)
 	checkOpenResolver(
 		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv6",
-		[]string{"2620:fe::fe", "2620:fe::9", "2620:fe::10", "2620:fe::fe:10", "2620:fe::11", "2620:fe::fe:11"},
+		[]string{"2620:fe::fe", "2620:fe::9"},
 	)
 	check.Log(log.LevelInfo, "FINISH", "Finished")
 }
