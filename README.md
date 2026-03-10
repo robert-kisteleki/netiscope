@@ -91,9 +91,14 @@ As per the default configuration the following connections are tried:
 
 ### 6. DNS over HTTPS (DoH)
 
-In this check a series of name lookups are tried against a number of DoH providers. The list of DoH providers is defined in the [doh] section of the configuration file. Similary as with other DNS checks, the list of names to look up is defined in the [dns] section and the results are matched against a known-good list of potential responses (see CIDR list).
+In this check a series of name lookups are tried against a number of DoH providers. The list of DoH providers is defined in the `[doh]` section of the configuration file. Similary as with other DNS checks, the list of names to look up is defined in the `[dns]` section and the results are matched against a known-good list of potential responses (see CIDR list).
 
 Both JSON and RFC8484 formats are supported.
+
+### 7. SSH host key check
+
+Test if a target SSH server presents a valid / known host key, in essence to detect the presence of interference / an on-path attacker. Multiple target servers can be configured in the `[ssh_host_keys]` section; each one is tested separately.
+
 
 ### X. Future checks
 
