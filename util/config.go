@@ -28,6 +28,7 @@ var (
 	flagRunCheck  string
 	flagGui       bool
 	flagVersion   bool
+	flagJSON      bool
 	GuiIPv4       bool
 	GuiIPv6       bool
 
@@ -54,6 +55,7 @@ func SetupFlags() {
 	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
 	flag.BoolVar(&flagGui, "gui", false, "Start with a browser GUI")
 	flag.BoolVar(&flagVersion, "version", false, "Show version")
+	flag.BoolVar(&flagJSON, "json", false, "Output results in JSON format")
 
 	flag.Parse()
 }
@@ -251,4 +253,8 @@ func GetLogLevel() string {
 	} else {
 		return cfg.Section("main").Key("loglevel").MustString("")
 	}
+}
+
+func UseJSONFormat() bool {
+	return flagJSON
 }

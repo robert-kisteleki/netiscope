@@ -133,8 +133,9 @@ Notable command line options:
   * `-skip4` and `-skip6` disable IPV4/IPv6 checks, respectively
   * `-force4` and `-force6` enforce IPV4/IPv6 checks, respectively, even if no useful network interfaces are found
   * `-l LEVEL` sets the log level. LEVEL can be _detail_, _info_, _warning_ or _error_
-  * `-v` for verbose mode:
+  * `-v` for verbose mode
   * `-check CHECK` to execure (only) that check
+  * `-json` to get JSON output in CLI mode
 
 The _configuration file_ has several sections:
   * The `main` section has basic options, many which can also be set on the command line:

@@ -110,9 +110,10 @@ func ExecuteChecks(checksToDo []string) {
 }
 
 func PrintResults() {
+	jsonFormat := util.UseJSONFormat()
 	levelCounter := make([]int, 7)
 	for data := range AllResults {
-		PrintResultItem(data)
+		PrintResultItem(data, jsonFormat)
 		levelCounter[data.Level]++
 	}
 
@@ -123,7 +124,7 @@ func PrintResults() {
 		levelCounter[LogLevelWarning],
 		levelCounter[LogLevelError],
 	)
-	PrintResultItem(NewFinding("admin", LogLevelAdmin, "SUMMARY", summary))
+	PrintResultItem(NewFinding("admin", LogLevelAdmin, "SUMMARY", summary), jsonFormat)
 }
 
 func initializeCheckByName(name string) (NetiscopeCheck, bool) {

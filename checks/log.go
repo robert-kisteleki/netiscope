@@ -1,6 +1,7 @@
 package checks
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -73,7 +74,7 @@ func NewFinding(check string, level LogLevelType, mnemonic string, details strin
 	}
 }
 
-func PrintResultItem(finding ResultItem) {
+func PrintResultItem(finding ResultItem, jsonFormat bool) {
 	level := finding.Level
 	if (level == LogLevelFatal) || (level == LogLevelTodo) ||
 		(level == LogLevelAdmin) ||
@@ -82,14 +83,22 @@ func PrintResultItem(finding ResultItem) {
 		(level == LogLevelInfo && LogLevel <= 1) ||
 		(level == LogLevelDetail && LogLevel == 0) {
 
-		fmt.Print(finding.Timestamp)
-		fmt.Printf("\t%s", finding.Check)
-		fmt.Printf("\t%s", level.String())
-		fmt.Printf("\t%s", finding.Mnemonic)
-		if finding.Details != "" {
-			fmt.Printf("\t%s", finding.Details)
+		if jsonFormat {
+			b, err := json.Marshal(finding)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("%s\n", b)
+		} else {
+			fmt.Print(finding.Timestamp)
+			fmt.Printf("\t%s", finding.Check)
+			fmt.Printf("\t%s", level.String())
+			fmt.Printf("\t%s", finding.Mnemonic)
+			if finding.Details != "" {
+				fmt.Printf("\t%s", finding.Details)
+			}
+			fmt.Println()
 		}
-		fmt.Println()
 	}
 }
 
