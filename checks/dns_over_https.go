@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 
-	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -17,12 +16,14 @@ type DNSOverHTTPSProvidersCheck struct {
 }
 
 // Start executes the DoH provider check
-func (check *DNSOverHTTPSProvidersCheck) Start() {
+func (check *DNSOverHTTPSProvidersCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	// the names to look up are in the config file
 	names := util.GetDNSNamesToLookup()
 	if len(names) == 0 {
-		check.Log(
-			log.LevelFatal, "DOH_NO_NAMES",
+		check.log(
+			LogLevelFatal, "DOH_NO_NAMES",
 			"The list of names to look up is empty",
 		)
 		return
@@ -31,6 +32,10 @@ func (check *DNSOverHTTPSProvidersCheck) Start() {
 	// the providers (base URLs) to check up are in the config file
 	providers := util.GetDoHProviders()
 	for _, provider := range providers {
+		if check.stopping {
+			break
+		}
+
 		af := provider[0]
 		format := provider[1]
 		pbase := provider[2]
@@ -39,8 +44,8 @@ func (check *DNSOverHTTPSProvidersCheck) Start() {
 
 			// loop over each name that needs to be looked up
 			for _, name := range names {
-				check.Log(
-					log.LevelDetail,
+				check.log(
+					LogLevelDetail,
 					fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s", af),
 					fmt.Sprintf("Checking for name %s via %s (format: %s) using IPv%s", name, pbase, format, af),
 				)
@@ -55,7 +60,7 @@ func (check *DNSOverHTTPSProvidersCheck) Start() {
 				client := &http.Client{}
 				req, err := http.NewRequest("GET", buildDoHQueryURL(check, format, pbase, qtype, name, true), nil)
 				if err != nil {
-					check.Log(log.LevelError, "DOH_PROVIDER_REQUEST_ERROR", fmt.Sprintf("Error: %v", err))
+					check.log(LogLevelError, "DOH_PROVIDER_REQUEST_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 				switch format {
@@ -66,28 +71,28 @@ func (check *DNSOverHTTPSProvidersCheck) Start() {
 				}
 				resp, err := client.Do(req)
 				if err != nil {
-					check.Log(log.LevelError, "DOH_PROVIDER_GET_ERROR", fmt.Sprintf("Error: %v", err))
+					check.log(LogLevelError, "DOH_PROVIDER_GET_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 				defer resp.Body.Close()
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
-					check.Log(log.LevelError, "DOH_PROVIDER_READ_ERROR", fmt.Sprintf("Error: %v", err))
+					check.log(LogLevelError, "DOH_PROVIDER_READ_ERROR", fmt.Sprintf("Error: %v", err))
 					continue
 				}
 
 				// try to extract A and AAAA answers
 				addrs, err := parseDoHResponse(check, format, body)
 				if err != nil {
-					check.Log(
-						log.LevelError,
+					check.log(
+						LogLevelError,
 						fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s_RESULT_ERROR", af),
 						fmt.Sprintf("Error: %v", err),
 					)
 				}
 
-				check.Log(
-					log.LevelInfo,
+				check.log(
+					LogLevelInfo,
 					fmt.Sprintf("DOH_PROVIDER_LOOKUP_IPV%s_RESULT_OK", af),
 					fmt.Sprintf("Result for %s: %v", name, addrs),
 				)
@@ -100,7 +105,7 @@ func (check *DNSOverHTTPSProvidersCheck) Start() {
 		}
 	}
 
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+	check.netiscopeCheckBase.finish()
 }
 
 // given a format, the provider's base URL and the parameters, build the DoH query URL

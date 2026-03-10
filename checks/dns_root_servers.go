@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -42,8 +41,13 @@ var rootDNSServers = []rootDNSServer{
 }
 
 // Start executes the DNS root server check
-func (check *DNSRootServersCheck) Start() {
+func (check *DNSRootServersCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	for _, server := range rootDNSServers {
+		if check.stopping {
+			break
+		}
 		if !util.SkipIPv4() {
 			checkRootDNSServer(&check.netiscopeCheckBase, server.letter, "IPv4", server.addresses.v4)
 		}
@@ -54,7 +58,7 @@ func (check *DNSRootServersCheck) Start() {
 
 	// TODO: compare responses from different root servers?
 
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+	check.netiscopeCheckBase.finish()
 }
 
 // check a particular DNS root server on IPv4 or IPv6
@@ -67,8 +71,8 @@ func checkRootDNSServer(
 	af string,
 	server string,
 ) {
-	check.Log(
-		log.LevelInfo,
+	check.log(
+		LogLevelInfo,
 		"CKECKING_DNS_ROOT_SERVER",
 		fmt.Sprintf(
 			"Checking %s-root %s server %v",
@@ -117,15 +121,15 @@ func queryRootDNSServer(
 ) (out MultipleResult) {
 
 	// ask one server for a SOA record and check sanity of the result
-	check.Log(
-		log.LevelInfo,
+	check.log(
+		LogLevelInfo,
 		"ROOT_DNS_SERVER_SOA_QUERY",
 		fmt.Sprintf("Querying SOA record from %s-root server %s", letter, server),
 	)
 
 	answers, err := DNSQuery(check, ".", "SOA", server, true, false, true, false)
 	if err != nil {
-		check.Log(log.LevelError, "ROOT_DNS_SERVER_SOA", err.Error())
+		check.log(LogLevelError, "ROOT_DNS_SERVER_SOA", err.Error())
 		out[ResultFailure]++
 	}
 
@@ -140,14 +144,14 @@ func queryRootDNSServer(
 
 		// grace period for SOA serial is two days
 		if curTime-parsedSerialUnix < 2*86400 {
-			check.Log(
-				log.LevelInfo, "ROOT_DNS_SERVER_SOA_SERIAL",
+			check.log(
+				LogLevelInfo, "ROOT_DNS_SERVER_SOA_SERIAL",
 				fmt.Sprintf("SOA serial is %s", serial),
 			)
 			out[ResultSuccess]++
 		} else {
-			check.Log(
-				log.LevelWarning, "ROOT_DNS_SERVER_SOA_OLD",
+			check.log(
+				LogLevelWarning, "ROOT_DNS_SERVER_SOA_OLD",
 				fmt.Sprintf("SOA serial %s is too old?", serial),
 			)
 			out[ResultFailure]++
@@ -156,8 +160,8 @@ func queryRootDNSServer(
 
 	// report NSID
 	for _, answer := range answers["NSID"] {
-		check.Log(
-			log.LevelInfo, "ROOT_DNS_SERVER_NSID",
+		check.log(
+			LogLevelInfo, "ROOT_DNS_SERVER_NSID",
 			fmt.Sprintf("NSID of DNS response is %s", answer),
 		)
 	}
@@ -167,32 +171,32 @@ func queryRootDNSServer(
 	// the TLDs to look up are in the config file
 	tlds := util.GetTLDsToLookup()
 	if len(tlds) == 0 {
-		check.Log(log.LevelFatal, "ROOT_NO_TLDS", "The list of TLDs to look up is empty")
+		check.log(LogLevelFatal, "ROOT_NO_TLDS", "The list of TLDs to look up is empty")
 	}
 
 	// look up the predefined TLDs
 	for _, tld := range tlds {
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"ROOT_DNS_SERVER_TLD_QUERY",
 			fmt.Sprintf("Querying TLD %s from %s-root server %s", tld, letter, server),
 		)
 
 		answers, err := DNSQuery(check, tld+".", "NS", server, true, false, true, false)
 		if err != nil {
-			check.Log(log.LevelError, "ROOT_DNS_SERVER_TLD", err.Error())
+			check.log(LogLevelError, "ROOT_DNS_SERVER_TLD", err.Error())
 			out[ResultFailure]++
 		}
 
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"ROOT_DNS_SERVER_TLD_NSSET",
 			fmt.Sprintf("NS set for %s is %v", tld, answers["NS"]),
 		)
 		if len(answers["NS"]) < 4 {
 			// TODO: better sanity check of answers
-			check.Log(
-				log.LevelWarning,
+			check.log(
+				LogLevelWarning,
 				"ROOT_DNS_SERVER_NSSET_SHORT",
 				fmt.Sprintf("NS set for %s is too short (%d)", tld, len(answers["NS"])),
 			)
@@ -201,7 +205,7 @@ func queryRootDNSServer(
 
 		// report NSID
 		for _, answer := range answers["NSID"] {
-			check.Log(log.LevelInfo, "ROOT_DNS_SERVER_NSID", fmt.Sprintf("NSID of DNS response is %s", answer))
+			check.log(LogLevelInfo, "ROOT_DNS_SERVER_NSID", fmt.Sprintf("NSID of DNS response is %s", answer))
 		}
 		out[ResultSuccess]++
 	}
@@ -219,23 +223,23 @@ func queryRootDNSServer(
 
 	// look up random TLDs
 	for _, tld := range randomTLDs {
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"ROOT_DNS_SERVER_RANDOM_QUERY",
 			fmt.Sprintf("Querying TLD %s from %s-root server %s", tld, letter, server),
 		)
 
 		answers, err := DNSQuery(check, tld+".", "NS", server, true, false, true, false)
 		if err != nil {
-			check.Log(
-				log.LevelDetail,
+			check.log(
+				LogLevelDetail,
 				"ROOT_DNS_SERVER_TLD_NXDOMAIN",
 				fmt.Sprintf("Random TLD lookup for %s failed as expected", tld),
 			)
 			out[ResultSuccess]++
 		} else {
-			check.Log(
-				log.LevelError,
+			check.log(
+				LogLevelError,
 				"ROOT_DNS_SERVER_TLD_NSSET",
 				fmt.Sprintf("NS set for %s is %v", tld, answers["NS"]),
 			)
@@ -244,8 +248,8 @@ func queryRootDNSServer(
 
 		// report NSID
 		for _, answer := range answers["NSID"] {
-			check.Log(
-				log.LevelInfo,
+			check.log(
+				LogLevelInfo,
 				"ROOT_DNS_SERVER_NSID",
 				fmt.Sprintf("NSID of DNS response is %s", answer),
 			)

@@ -2,7 +2,6 @@ package checks
 
 import (
 	"fmt"
-	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -17,7 +16,9 @@ type DNSQuad9OpenResolverCheck struct {
 }
 
 // CheckGoogleDNS checks Google's open resolver
-func (check *DNSGoogleOpenResolverCheck) Start() {
+func (check *DNSGoogleOpenResolverCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	checkOpenResolver(
 		&check.netiscopeCheckBase,
 		"Google",
@@ -30,11 +31,14 @@ func (check *DNSGoogleOpenResolverCheck) Start() {
 		"IPv6",
 		[]string{"2001:4860:4860::8888", "2001:4860:4860::8844"},
 	)
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+
+	check.netiscopeCheckBase.finish()
 }
 
 // CheckCloudflareDNS checks Cloudflare's open resolver
-func (check *DNSCloudflareOpenResolverCheck) Start() {
+func (check *DNSCloudflareOpenResolverCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	checkOpenResolver(
 		&check.netiscopeCheckBase,
 		"Cloudflare",
@@ -47,24 +51,28 @@ func (check *DNSCloudflareOpenResolverCheck) Start() {
 		"IPv6",
 		[]string{"2606:4700:4700::1111", "2606:4700:4700::1001"},
 	)
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+
+	check.netiscopeCheckBase.finish()
 }
 
 // CheckQuad9DNS checks Quad9's open resolver
-func (check *DNSQuad9OpenResolverCheck) Start() {
+func (check *DNSQuad9OpenResolverCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	checkOpenResolver(
 		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv4",
-		[]string{"9.9.9.9"},
+		[]string{"9.9.9.9", "149.112.112.112"},
 	)
 	checkOpenResolver(
 		&check.netiscopeCheckBase,
 		"Quad9",
 		"IPv6",
-		[]string{"2620:fe::fe", "2620:fe::9", "2620:fe::10", "2620:fe::fe:10", "2620:fe::11", "2620:fe::fe:11"},
+		[]string{"2620:fe::fe", "2620:fe::9"},
 	)
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+
+	check.netiscopeCheckBase.finish()
 }
 
 func checkOpenResolver(
@@ -74,8 +82,8 @@ func checkOpenResolver(
 	resolvers []string,
 ) {
 	if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"CKECKING_OPEN_DNS_RESOLVER",
 			fmt.Sprintf(
 				"Checking %s's %s resolvers %v",

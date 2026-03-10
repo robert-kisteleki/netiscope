@@ -17,11 +17,12 @@ function handleIncomingResult(data) {
 	updateCheckStatus(check_name);
 
 	// check if one or all checks are finished
-	if( data.mnemonic == "FINISH" ) {
+	if( data.mnemonic.endsWith("FINISH") ) {
 		finishCheck(check_name);
 		if( check_name == "admin" ) {
 			$("#startbutton").html(`Start checks`);
 			$("#startbutton").prop("disabled", false);
+			$("#stopbutton").prop("disabled", true);
 		}
 	}
 }
@@ -79,6 +80,7 @@ $.when( $.ready ).then(function() {
 
 	// handler for start button click
 	$("#startbutton").on("click", startChecks)
+	$("#stopbutton").on("click", stopChecks)
 });
 
 // show the list of available checks together with checkboxes
@@ -102,6 +104,19 @@ function showChecksList() {
 </div>`);
 		});
 	}
+}
+
+function stopChecks() {
+	// get the party stopped
+	$.ajax({
+		url: "/api/control/stop",
+		type: "POST",
+		headers: {"Content-Type": "application/json"},
+	});
+
+	$("#startbutton").html(`Start checks`);
+	$("#startbutton").prop("disabled", false);
+	$("#stopbutton").prop("disabled", true);
 }
 
 // start the selected checks upon clicking the start button
@@ -143,6 +158,7 @@ function startChecks() {
 	// prevent double-clicking the button
 	$("#startbutton").html(`<span>Running...</span> <span class="spinner-border spinner-border-sm"></span>`);
 	$("#startbutton").prop("disabled", true);
+	$("#stopbutton").prop("disabled", false);
 }
 
 // create an accordion item for a check with the given name

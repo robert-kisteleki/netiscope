@@ -3,7 +3,6 @@ package checks
 import (
 	"bufio"
 	"fmt"
-	"netiscope/log"
 	"netiscope/util"
 	"os"
 	"strings"
@@ -20,14 +19,16 @@ type DNSLocalResolversCheck struct {
 }
 
 // Start executes the local DNS resolver check
-func (check *DNSLocalResolversCheck) Start() {
+func (check *DNSLocalResolversCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	if !check.loadResolvers() {
-		check.Log(log.LevelError, "NO_RESOLV_CONF", "Could not load DNS resolver data from resolv.conf")
+		check.log(LogLevelError, "NO_RESOLV_CONF", "Could not load DNS resolver data from resolv.conf")
 		return
 	}
 	check.testLocalResolvers()
 
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+	check.netiscopeCheckBase.finish()
 }
 
 // read and collect useful entries from resolv.conf
@@ -42,11 +43,11 @@ func (check *DNSLocalResolversCheck) loadResolvers() bool {
 	if err != nil {
 		return false
 	}
-	check.Log(
-		log.LevelInfo,
+	check.log(
+		LogLevelInfo,
 		"RESOLVCONF_DATE",
 		fmt.Sprintf("resolv.conf was last modified %s ago (at %s)",
-			log.DurationToHuman(time.Since(rcstat.ModTime())),
+			DurationToHuman(time.Since(rcstat.ModTime())),
 			rcstat.ModTime().Format(time.RFC3339),
 		),
 	)
@@ -68,14 +69,14 @@ func (check *DNSLocalResolversCheck) loadResolvers() bool {
 		}
 	}
 
-	check.Log(log.LevelInfo, "DOMAIN", fmt.Sprintf("Current domain is: %s", check.rcDomain))
+	check.log(LogLevelInfo, "DOMAIN", fmt.Sprintf("Current domain is: %s", check.rcDomain))
 	if !util.SkipIPv4() {
-		check.Log(log.LevelInfo, "LOCAL_DNS_RESOLVERS", fmt.Sprintf("IPv4 resolvers: %s", check.rcResolversV4))
+		check.log(LogLevelInfo, "LOCAL_DNS_RESOLVERS", fmt.Sprintf("IPv4 resolvers: %s", check.rcResolversV4))
 	}
 	if !util.SkipIPv6() {
-		check.Log(log.LevelInfo, "LOCAL_DNS_RESOLVERS", fmt.Sprintf("IPv6 resolvers: %s", check.rcResolversV6))
+		check.log(LogLevelInfo, "LOCAL_DNS_RESOLVERS", fmt.Sprintf("IPv6 resolvers: %s", check.rcResolversV6))
 	}
-	check.Log(log.LevelInfo, "SEARCH", fmt.Sprintf("Search path: %s", check.rcSearch))
+	check.log(LogLevelInfo, "SEARCH", fmt.Sprintf("Search path: %s", check.rcSearch))
 
 	return true
 }
@@ -86,7 +87,7 @@ func (check *DNSLocalResolversCheck) testLocalResolvers() {
 		if len(check.rcResolversV4) > 0 {
 			testResolversOnAddressFamily(&check.netiscopeCheckBase, "LOCAL_DNS_RESOLVER", "IPv4", "local DNS resolvers", check.rcResolversV4)
 		} else {
-			check.Log(log.LevelWarning, "NO_LOCAL_IPV4_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
+			check.log(LogLevelWarning, "NO_LOCAL_IPV4_RESOLVERS", "No IPv4 resolvers defined in resolv.conf")
 		}
 	}
 
@@ -94,11 +95,11 @@ func (check *DNSLocalResolversCheck) testLocalResolvers() {
 		if len(check.rcResolversV6) > 0 {
 			testResolversOnAddressFamily(&check.netiscopeCheckBase, "LOCAL_DNS_RESOLVER", "IPv6", "local DNS resolvers", check.rcResolversV6)
 		} else {
-			check.Log(log.LevelWarning, "NO_LOCAL_IPV6_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
+			check.log(LogLevelWarning, "NO_LOCAL_IPV6_RESOLVERS", "No IPv6 resolvers defined in resolv.conf")
 		}
 	}
 
 	if len(check.rcResolversV4) == 0 && len(check.rcResolversV6) == 0 {
-		check.Log(log.LevelError, "NO_LOCAL_RESOLVERS", "No DNS resolvers defined in resolv.conf")
+		check.log(LogLevelError, "NO_LOCAL_RESOLVERS", "No DNS resolvers defined in resolv.conf")
 	}
 }

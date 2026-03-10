@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -14,11 +13,13 @@ type NetworkInterfacesCheck struct {
 }
 
 // Start executes the network interfaces check
-func (check *NetworkInterfacesCheck) Start() {
+func (check *NetworkInterfacesCheck) start() {
+	check.netiscopeCheckBase.start()
+
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		// it's probably very bad if we got an error
-		check.Log(log.LevelFatal, "NO_INTERFACES", "Error evaluating network interfaces")
+		check.log(LogLevelFatal, "NO_INTERFACES", "Error evaluating network interfaces")
 		return
 	}
 
@@ -42,27 +43,27 @@ func (check *NetworkInterfacesCheck) Start() {
 
 	// any useful IPv4 addresses found?
 	if !util.SkipIPv4() && !IPv4Unicast {
-		check.Log(log.LevelWarning, "NO_IPV4", "No routable IPv4 addresses found")
+		check.log(LogLevelWarning, "NO_IPV4", "No routable IPv4 addresses found")
 		util.SetFailedIPv4()
 	}
 
 	// any useful addresses IPv6 found?
 	if !util.SkipIPv6() && !IPv6Unicast {
-		check.Log(log.LevelWarning, "NO_IPV6", "No routable IPv6 addresses found")
+		check.log(LogLevelWarning, "NO_IPV6", "No routable IPv6 addresses found")
 		util.SetFailedIPv6()
 	}
 
 	// any useful addresses found at all?
 	if !IPv4Unicast && !IPv6Unicast {
 		if util.SkipIPv4() && util.SkipIPv6() {
-			check.Log(
-				log.LevelWarning,
+			check.log(
+				LogLevelWarning,
 				"NO_CHECK",
 				"No checks to do (IPv4 and IPv6 checks are disabled)",
 			)
 		} else {
-			check.Log(
-				log.LevelError,
+			check.log(
+				LogLevelError,
 				"NO_ROUTABLE_ADDRESSES_FOUND",
 				"No routable addresses found",
 			)
@@ -71,7 +72,7 @@ func (check *NetworkInterfacesCheck) Start() {
 
 	// TODO: check if the gateway(s) is/are reachable?
 
-	check.Log(log.LevelInfo, "FINISH", "Finished")
+	check.netiscopeCheckBase.finish()
 }
 
 // evaluateAddr checks if a given address seems to be useful
@@ -85,20 +86,20 @@ func (check *NetworkInterfacesCheck) evaluateIPv4NetworkAddress(
 	// IPv4 routable?
 	if !util.SkipIPv4() && ip.IsGlobalUnicast() {
 		if util.IsIPv4NAT(ipstring) {
-			check.Log(
-				log.LevelInfo,
+			check.log(
+				LogLevelInfo,
 				"IPV4",
 				fmt.Sprintf("Local address %s (NAT, RFC1918)", ipstring),
 			)
 		} else if util.IsIPv4Suspicious(ipstring) {
-			check.Log(
-				log.LevelWarning,
+			check.log(
+				LogLevelWarning,
 				"IPV4",
 				fmt.Sprintf("Local address %s (suspicious)", ipstring),
 			)
 		} else {
-			check.Log(
-				log.LevelInfo,
+			check.log(
+				LogLevelInfo,
 				"IPV4",
 				fmt.Sprintf("Local address %s", ipstring),
 			)
@@ -109,8 +110,8 @@ func (check *NetworkInterfacesCheck) evaluateIPv4NetworkAddress(
 	// IPv4 non-routable?
 	if !util.SkipIPv4() && ip.IsLinkLocalUnicast() {
 		if util.IsIPv4DCHP(ipstring) {
-			check.Log(
-				log.LevelWarning,
+			check.log(
+				LogLevelWarning,
 				"IPV4",
 				fmt.Sprintf("Local address %s (no address obtained via DHCP?)", ipstring),
 			)
@@ -130,8 +131,8 @@ func (check *NetworkInterfacesCheck) evaluateIPv6NetworkAddress(
 
 	// IPv6 routable?
 	if !util.SkipIPv6() && ip.IsGlobalUnicast() && !util.IsIPv6ULA(ipstring) {
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"IPV6",
 			fmt.Sprintf("Local address %s", ipstring),
 		)

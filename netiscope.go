@@ -10,7 +10,6 @@ package main
 import (
 	"fmt"
 	"netiscope/checks"
-	"netiscope/log"
 	"netiscope/util"
 	"runtime"
 )
@@ -25,9 +24,7 @@ func main() {
 
 	util.ReadConfig()
 	util.ReadCIDRConfig()
-	log.SetLogLevel(util.GetLogLevel(), util.Verbose())
-
-	log.AllResults = make(chan log.ResultItem)
+	checks.SetLogLevel(util.GetLogLevel(), util.Verbose())
 
 	if util.StartGui() {
 		runGui()
@@ -40,16 +37,16 @@ func main() {
 func startChecks(checksToDo []string, close bool) {
 	checks.Start()
 	if util.SkipIPv4() {
-		checks.AdminCheck.Log(log.LevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
+		checks.AdminCheck.Log(checks.LogLevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
 	}
 	if util.SkipIPv6() {
-		checks.AdminCheck.Log(log.LevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
+		checks.AdminCheck.Log(checks.LogLevelAdmin, "SKIP_IPV6", "IPv6 checks are disabled")
 	}
 	checks.ExecuteChecks(checksToDo)
 	checks.Finish(close)
 }
 
 // this is triggered by the GUI
-func abortChecks() {
-	checks.Abort()
+func stopChecks() {
+	checks.Stop()
 }

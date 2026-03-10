@@ -3,7 +3,6 @@ package checks
 import (
 	"fmt"
 	"net"
-	"netiscope/log"
 	"os"
 	"strings"
 
@@ -63,8 +62,8 @@ func DNSQuery(
 
 	result = parseDNSResponse(check, response)
 
-	check.Log(
-		log.LevelDetail,
+	check.log(
+		LogLevelDetail,
 		"DNS_QUERY_STATS",
 		fmt.Sprintf("Query time: %v, server: %s (%s), size: %d bytes", rtt, server, c.Net, response.Len()),
 	)
@@ -156,8 +155,8 @@ func prepareDNSQuery(
 	case "NS":
 		qt = dns.TypeNS
 	default:
-		check.Log(
-			log.LevelFatal,
+		check.log(
+			LogLevelFatal,
 			"DNS",
 			fmt.Sprintf("Don't know how to query DNS for %s", qType),
 		)
@@ -210,8 +209,8 @@ func parseDNSResponse(
 		case *dns.NS:
 			result["NS"] = append(result["NS"], t.Ns)
 		default:
-			check.Log(
-				log.LevelFatal,
+			check.log(
+				LogLevelFatal,
 				"DNS",
 				fmt.Sprintf("Don't know how to handle result type %v", t),
 			)

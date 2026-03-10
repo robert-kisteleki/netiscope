@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"netiscope/log"
 	"netiscope/util"
 
 	probing "github.com/prometheus-community/pro-bing"
@@ -17,8 +16,8 @@ func Ping(
 	target string,
 	mnemo string,
 ) (result ResultCode) {
-	check.Log(
-		log.LevelInfo,
+	check.log(
+		LogLevelInfo,
 		fmt.Sprintf("PING_%s", mnemo),
 		fmt.Sprintf("Pinging %s", target),
 	)
@@ -30,8 +29,8 @@ func Ping(
 	}
 
 	pinger.OnRecv = func(pkt *probing.Packet) {
-		check.Log(
-			log.LevelDetail,
+		check.log(
+			LogLevelDetail,
 			"PING_PACKET",
 			fmt.Sprintf(
 				"ping: %d bytes from %s: icmp_seq=%d time=%v ttl=%v",
@@ -42,15 +41,15 @@ func Ping(
 
 	pinger.OnFinish = func(stats *probing.Statistics) {
 		packetloss = stats.PacketLoss
-		check.Log(
-			log.LevelDetail,
+		check.log(
+			LogLevelDetail,
 			"PING_RESULTS",
 			fmt.Sprintf(
 				"%d packets transmitted, %d packets received, %v%% packet loss",
 				stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss),
 		)
-		check.Log(
-			log.LevelDetail,
+		check.log(
+			LogLevelDetail,
 			"PING_STATS",
 			fmt.Sprintf(
 				"round-trip min/avg/max/stddev = %v/%v/%v/%v",
@@ -64,22 +63,22 @@ func Ping(
 
 	switch {
 	case packetloss == 0.0:
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			fmt.Sprintf("PING_%s_WORKS", mnemo),
 			fmt.Sprintf("Server %s is reachable", target),
 		)
 		return ResultSuccess
 	case packetloss == 100.0:
-		check.Log(
-			log.LevelWarning,
+		check.log(
+			LogLevelWarning,
 			fmt.Sprintf("PING_%s_FAILS", mnemo),
 			fmt.Sprintf("Server %s is not reachable", target),
 		)
 		return ResultFailure
 	default:
-		check.Log(
-			log.LevelWarning,
+		check.log(
+			LogLevelWarning,
 			fmt.Sprintf("PING_%s_WARNING", mnemo),
 			fmt.Sprintf("Server %s shows packet loss", target),
 		)
@@ -95,6 +94,9 @@ func PingServers(
 	resolvers []string,
 ) (outcollector MultipleResult) {
 	for _, resolver := range resolvers {
+		if check.stopping {
+			return
+		}
 		pingResult := Ping(check, resolver, mnemo)
 		outcollector[pingResult]++
 	}

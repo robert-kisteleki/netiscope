@@ -12,10 +12,12 @@
 </head>
 
 <body>
-
-	<h1>Netiscope GUI</h1>
-
 	<div class="container-fluid">
+		<div class="row">
+			<div class="col">
+				<h1>Netiscope GUI</h1>
+			</div>
+		</div>
 		<div class="row">
 
 			<div class="col-sm-3 sidebar-sticky">
@@ -23,8 +25,11 @@
 				<div class="container-fluid">
 
 					<div class="row">
-						<div class="col">
+						<div class="col-6 d-grid">
 							<button class="btn btn-primary" type="submit" id="startbutton">Start checks</button>
+						</div>
+						<div class="col-6 d-grid">
+							<button class="btn btn-danger" type="submit" id="stopbutton" disabled>Stop</button>
 						</div>
 					</div>
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"netiscope/log"
 	"netiscope/util"
 )
 
@@ -19,8 +18,8 @@ func queryNamesFromResolvers(
 	// the names to look up are in the config file
 	names := util.GetDNSNamesToLookup()
 	if len(names) == 0 {
-		check.Log(
-			log.LevelFatal,
+		check.log(
+			LogLevelFatal,
 			fmt.Sprintf("%s_NO_NAMES", strings.ToUpper(rtype)),
 			"The list of names to look up is empty",
 		)
@@ -28,10 +27,12 @@ func queryNamesFromResolvers(
 	}
 
 	for _, resolver := range resolvers {
-
 		// collect the results of looking up all names with this resolver
 		var resolverResults MultipleResult
 		for _, name := range names {
+			if check.stopping {
+				return
+			}
 			resolverResults[queryNameFromResolver(check, name, resolver)]++
 		}
 
@@ -40,22 +41,22 @@ func queryNamesFromResolvers(
 		switch {
 		case resolverResults[ResultSuccess] == 0 && resolverResults[ResultFailure] > 0:
 			out[ResultFailure]++
-			check.Log(
-				log.LevelError,
+			check.log(
+				LogLevelError,
 				fmt.Sprintf("QUERY_%s_FAILS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s is not answering queries", resolver),
 			)
 		case resolverResults[ResultSuccess] > 0 && resolverResults[ResultFailure] > 0:
 			out[ResultPartial]++
-			check.Log(
-				log.LevelWarning,
+			check.log(
+				LogLevelWarning,
 				fmt.Sprintf("QUERY_%s_FLAKY", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s failed to answer some queries", resolver),
 			)
 		case resolverResults[ResultSuccess] > 0 && resolverResults[ResultFailure] == 0:
 			out[ResultSuccess]++
-			check.Log(
-				log.LevelInfo,
+			check.log(
+				LogLevelInfo,
 				fmt.Sprintf("QUERY_%s_WORKS", strings.ToUpper(rtype)),
 				fmt.Sprintf("Resolver %s answered all queries", resolver),
 			)
@@ -77,7 +78,7 @@ func queryNameFromResolver(
 	if !util.SkipIPv4() {
 		answersA, err = DNSQuery(check, name, "A", resolver, false, true, true, false)
 		if err != nil {
-			check.Log(log.LevelError, "RESOLVER_ERROR_A", err.Error())
+			check.log(LogLevelError, "RESOLVER_ERROR_A", err.Error())
 			return ResultFailure
 		}
 	}
@@ -85,14 +86,14 @@ func queryNameFromResolver(
 	if !util.SkipIPv6() {
 		answersAAAA, err = DNSQuery(check, name, "AAAA", resolver, false, true, true, false)
 		if err != nil {
-			check.Log(log.LevelError, "RESOLVER_ERROR_AAAA", err.Error())
+			check.log(LogLevelError, "RESOLVER_ERROR_AAAA", err.Error())
 			return ResultFailure
 		}
 	}
 
 	if len(answersA)+len(answersAAAA) == 0 {
-		check.Log(
-			log.LevelError,
+		check.log(
+			LogLevelError,
 			"RESOLVER_ZERO_ANSWER",
 			fmt.Sprintf("Resolver %s gave no answers to query %s", resolver, name),
 		)
@@ -101,8 +102,8 @@ func queryNameFromResolver(
 
 	answers := append(answersA["A"], answersAAAA["AAAA"]...)
 
-	check.Log(
-		log.LevelInfo,
+	check.log(
+		LogLevelInfo,
 		"RESOLVER_ANSWERS",
 		fmt.Sprintf("Resolver %s's answer(s) to query %s is: %v", resolver, name, answers),
 	)
@@ -165,20 +166,20 @@ func reportResolversOnAddressFamily(
 	}
 	switch {
 	case out[ResultPartial] == 0 && out[ResultFailure] == 0:
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			fmt.Sprintf("%s_%s_OK", test, mnemo),
 			fmt.Sprintf("%s %s %v %s %s properly", af, kind, resolvers, isare, verb),
 		)
 	case out[ResultPartial] > 0:
-		check.Log(
-			log.LevelWarning,
+		check.log(
+			LogLevelWarning,
 			fmt.Sprintf("%s_%s_PARTIAL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s only partially %s", af, kind, resolvers, isare, verb),
 		)
 	default:
-		check.Log(
-			log.LevelError,
+		check.log(
+			LogLevelError,
 			fmt.Sprintf("%s_%s_FAIL", test, mnemo),
 			fmt.Sprintf("%s %s %v %s not %s properly", af, kind, resolvers, isare, verb),
 		)

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"netiscope/log"
+	"netiscope/checks"
 	"netiscope/util"
 	"runtime"
 
@@ -88,8 +88,7 @@ func guiControlStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("GUI: sending STOP signal")
-	abortChecks()
+	stopChecks()
 
 	fmt.Fprint(w, string(
 		makeGuiControlResponse(guiResponse{Code: "OK", Message: "Stopped", Params: nil})),
@@ -112,7 +111,7 @@ func makeGuiControlResponse(response guiResponse) []byte {
 	return b
 }
 
-func makeGuiCheckItem(item log.ResultItem) []byte {
+func makeGuiCheckItem(item checks.ResultItem) []byte {
 	b, err := json.Marshal(item)
 	if err != nil {
 		panic(err)
@@ -135,7 +134,7 @@ func (wsh resultsWsHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	// here we should listen to the results channel
-	for data := range log.AllResults {
+	for data := range checks.AllResults {
 		err = conn.WriteMessage(websocket.TextMessage, makeGuiCheckItem(data))
 		if err != nil {
 			panic(fmt.Sprintf("Error sending message: %v", err))

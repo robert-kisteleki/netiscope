@@ -2,35 +2,69 @@ package checks
 
 import (
 	"fmt"
-	"netiscope/log"
 	"netiscope/util"
-	"os"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 )
 
+func init() {
+	AllResults = make(chan ResultItem)
+}
+
 type NetiscopeCheck interface {
-	Start()
-	Stop()
-	Log(level log.LogLevelType, mnemonic string, details string)
+	start()
+	stop()
+	log(level LogLevelType, mnemonic string, details string)
+	finish()
+	getNameAsMnemonic() string
 }
 
 type netiscopeCheckBase struct {
-	Name string
+	name     string
+	stopping bool
+	running  bool
 }
 
-func (check *netiscopeCheckBase) Stop() {
+func (check *netiscopeCheckBase) start() {
+	check.log(
+		LogLevelInfo,
+		check.getNameAsMnemonic()+"_START",
+		"Starting check",
+	)
+	check.running = true
 }
 
-func (check *netiscopeCheckBase) Log(
-	level log.LogLevelType,
+func (check *netiscopeCheckBase) stop() {
+	if check.running {
+		check.log(
+			LogLevelInfo,
+			check.getNameAsMnemonic()+"_STOP",
+			"Trying to stop the check",
+		)
+		check.stopping = true
+	}
+}
+
+func (check *netiscopeCheckBase) log(
+	level LogLevelType,
 	mnemonic string,
 	details string,
 ) {
-	finding := log.NewFinding(check.Name, level, mnemonic, details)
-	log.AllResults <- finding
+	AllResults <- NewFinding(check.name, level, mnemonic, details)
+}
+
+func (check *netiscopeCheckBase) finish() {
+	check.log(
+		LogLevelInfo,
+		check.getNameAsMnemonic()+"_FINISH",
+		"Finished",
+	)
+	check.running = false
+}
+
+func (check *netiscopeCheckBase) getNameAsMnemonic() string {
+	return strings.ToUpper(check.name)
 }
 
 // what checks are available
@@ -46,29 +80,12 @@ var knownChecks []string = []string{
 	"ssh_host_keys",
 }
 
-type NetiscopeAdminCheck struct {
-	netiscopeCheckBase
-}
-
-func (check NetiscopeAdminCheck) Start() {
-}
-
-var AdminCheck NetiscopeAdminCheck
-
-func init() {
-	AdminCheck = NetiscopeAdminCheck{
-		netiscopeCheckBase: netiscopeCheckBase{
-			Name: "admin",
-		},
-	}
-}
-
 var runningChecks []NetiscopeCheck
 
 // ExecuteChecks runs all the defined checks
 func ExecuteChecks(checksToDo []string) {
 	if len(checksToDo) == 0 {
-		AdminCheck.Log(log.LevelWarning, "NO_CHECKS", "No checks defined")
+		AdminCheck.log(LogLevelWarning, "NO_CHECKS", "No checks defined")
 		return
 	}
 
@@ -83,10 +100,10 @@ func ExecuteChecks(checksToDo []string) {
 
 			go func(check NetiscopeCheck) {
 				defer wg.Done()
-				check.Start()
+				check.start()
 			}(check)
 		} else {
-			AdminCheck.Log(log.LevelAdmin, "NO_SUCH_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i]))
+			AdminCheck.log(LogLevelAdmin, "NO_SUCH_CHECK", fmt.Sprintf("No such check: %s", checksToDo[i]))
 		}
 	}
 	wg.Wait()
@@ -94,23 +111,23 @@ func ExecuteChecks(checksToDo []string) {
 
 func PrintResults() {
 	levelCounter := make([]int, 7)
-	for data := range log.AllResults {
-		log.PrintResultItem(data)
+	for data := range AllResults {
+		PrintResultItem(data)
 		levelCounter[data.Level]++
 	}
 
 	summary := fmt.Sprintf(
 		"DETAIL=%d,INFO=%d,WARNING=%d,ERROR=%d",
-		levelCounter[log.LevelDetail],
-		levelCounter[log.LevelInfo],
-		levelCounter[log.LevelWarning],
-		levelCounter[log.LevelError],
+		levelCounter[LogLevelDetail],
+		levelCounter[LogLevelInfo],
+		levelCounter[LogLevelWarning],
+		levelCounter[LogLevelError],
 	)
-	log.PrintResultItem(log.NewFinding("admin", log.LevelAdmin, "SUMMARY", summary))
+	PrintResultItem(NewFinding("admin", LogLevelAdmin, "SUMMARY", summary))
 }
 
 func initializeCheckByName(name string) (NetiscopeCheck, bool) {
-	data := netiscopeCheckBase{Name: name}
+	data := netiscopeCheckBase{name: name}
 	var check NetiscopeCheck
 	switch name {
 	case "network_interfaces":
@@ -138,39 +155,21 @@ func initializeCheckByName(name string) (NetiscopeCheck, bool) {
 }
 
 func Start() {
-	AdminCheck.Log(log.LevelAdmin, "START", fmt.Sprintf("Started (version %s, %s)", util.Version, runtime.Version()))
+	AdminCheck.log(LogLevelAdmin, "START", fmt.Sprintf("Started (version %s, %s)", util.Version, runtime.Version()))
 }
 
 func Finish(closeChannel bool) {
-	AdminCheck.Log(log.LevelAdmin, "FINISH", "Finished")
+	AdminCheck.log(LogLevelAdmin, "FINISH", "Finished")
 	if closeChannel {
-		close(log.AllResults)
+		close(AllResults)
 	}
 }
 
-func Abort() {
-	AdminCheck.Log(log.LevelAdmin, "ABORT", "Aborting checks")
+func Stop() {
+	AdminCheck.log(LogLevelAdmin, "STOP", "Stopping checks")
 	for _, check := range runningChecks {
-		fmt.Println("checks: stopping", check)
-		check.Stop()
+		check.stop()
 	}
-}
-
-func showProgress(tracks map[string]int) {
-	if !util.Verbose() {
-		return
-	}
-	fmt.Fprint(os.Stderr, "\r")
-	keys := make([]string, 0, len(tracks))
-	for k := range tracks {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	progress := []string{}
-	for _, key := range keys {
-		progress = append(progress, fmt.Sprintf("%d", tracks[key]))
-	}
-	fmt.Fprintf(os.Stderr, "PROGRESS=%s", strings.Join(progress, "/"))
 }
 
 // CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
@@ -182,20 +181,20 @@ func CheckIPForProvider(
 	known, contains := util.IsIPInProviderCIDRBlock(ip, provider)
 	switch {
 	case !known:
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"PROVIDER_CIDR_UNKNOWN",
 			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
 		)
 	case known && contains:
-		check.Log(
-			log.LevelInfo,
+		check.log(
+			LogLevelInfo,
 			"PROVIDER_CIDR_OK",
 			fmt.Sprintf("The IP %s is in the CIDR block list for %s", ip, provider),
 		)
 	case known && !contains:
-		check.Log(
-			log.LevelWarning,
+		check.log(
+			LogLevelWarning,
 			"PROVIDER_CIDR_NOT_OK",
 			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
 		)
