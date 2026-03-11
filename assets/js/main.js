@@ -191,10 +191,17 @@ function filterChanged() {
 	// free text filter
 	textfilter = $("#textfilter").val().toLowerCase();
 	$(".filter-here").each(function() {
-		if( textfilter.length==0 || $(this).text().toLowerCase().includes(textfilter) ) {
-			$(this).parent().show();
+		show = false
+		$(this).children().each(function() {
+			if( textfilter.length==0 || $(this).text().toLowerCase().includes(textfilter) ) {
+				show = true;
+				return;
+			}
+		})
+		if( show ) {
+			$(this).show()
 		} else {
-			$(this).parent().hide();
+			$(this).hide()
 		}
 	})
 }
@@ -214,10 +221,10 @@ function formatResult(data) {
 
 		return `
 <div class="row result_level_`+levelToName(data.level)+`" `+(disp ? "" : "style='display:none;'")+`>
-  <div class="col"><div class="row">
+  <div class="col"><div class="row filter-here">
 		<div class="col-sm-2">`+data.timestamp.slice("YYYY-MM-DDT".length)+`</div>
-		<div class="col-sm-3 text-truncate filter-here">`+data.mnemonic+`</div>
-		<div class="col-sm-7 filter-here">`+data.details+`</div>
+		<div class="col-sm-3 text-truncate">`+data.mnemonic+`</div>
+		<div class="col-sm-7">`+data.details+`</div>
 	</div></div>
 </div>`;
 }
