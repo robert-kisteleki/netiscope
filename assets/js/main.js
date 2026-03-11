@@ -2,10 +2,13 @@ var checksList
 var checkStatuses = {}
 var severity = "warning"
 var textfilter = ""
+var allResults = []
 
 // format an incoming result, deal with counters and related administration
 function handleIncomingResult(data) {
 	data = JSON.parse(data);
+	allResults.push(data);
+
 	check_name = data.check.toLowerCase();
 
 	// add to result table
@@ -59,6 +62,7 @@ $.when( $.ready ).then(function() {
 	$("#textfilter").on("input", filterChanged);
 	$("#startbutton").on("click", startChecks);
 	$("#stopbutton").on("click", stopChecks);
+	$("#downloadbutton").on("click", downloadResultsAsJSONL);
 });
 
 // show the list of available checks together with checkboxes
@@ -99,6 +103,9 @@ function stopChecks() {
 function startChecks() {
 	// reset state
 	checkStatuses = {}
+
+	allResults = []
+
 	$("#results_accordion").empty();
 
 	container = $("#results_accordion")
@@ -273,4 +280,20 @@ function levelToName(level) {
 		default:
 			return "unknown";
 	}
+}
+
+function downloadResultsAsJSONL() {
+    var dataStr = ""
+		allResults.forEach(function(item) {
+			item.level = levelToName(item.level).toUpperCase();
+			dataStr += JSON.stringify(item) + "\n";
+		});
+		now = "" + Math.floor(new Date().getTime() / 1000);
+    const dataUri = 'data:application/json; charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = 'netiscope_results_' + now + '.jsonl';
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+		document.body.removeChild(linkElement);
 }

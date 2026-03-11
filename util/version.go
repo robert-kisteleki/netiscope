@@ -1,4 +1,4 @@
 package util
 
 // Version is printed in logs and used in various checks
-const Version = "0.6.20250715"
+const Version = "0.7.20260311"
