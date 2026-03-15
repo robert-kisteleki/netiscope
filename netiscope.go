@@ -45,8 +45,3 @@ func startChecks(checksToDo []string, close bool) {
 	checks.ExecuteChecks(checksToDo)
 	checks.Finish(close)
 }
-
-// this is triggered by the GUI
-func stopChecks() {
-	checks.Stop()
-}

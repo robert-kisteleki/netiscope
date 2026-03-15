@@ -9,6 +9,7 @@ import (
 	"netiscope/checks"
 	"netiscope/util"
 	"runtime"
+	"slices"
 
 	"github.com/gorilla/websocket"
 )
@@ -88,7 +89,7 @@ func guiControlStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stopChecks()
+	checks.Stop()
 
 	fmt.Fprint(w, string(
 		makeGuiControlResponse(guiResponse{Code: "OK", Message: "Stopped", Params: nil})),
@@ -99,7 +100,21 @@ func guiControlListChecks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	checks := util.GetChecks()
-	b := makeGuiControlResponse(guiResponse{Code: "OK", Message: "", Params: checks})
+	allChecks := util.GetAllChecks()
+
+	type CheckInfo struct {
+		Name    string `json:"name"`
+		Enabled bool   `json:"enabled"`
+	}
+
+	var checkInfos []CheckInfo
+	for _, check := range allChecks {
+		checkInfos = append(checkInfos, CheckInfo{
+			Name:    check,
+			Enabled: slices.Contains(checks, check),
+		})
+	}
+	b := makeGuiControlResponse(guiResponse{Code: "OK", Message: "", Params: checkInfos})
 	fmt.Fprint(w, string(b))
 }
 

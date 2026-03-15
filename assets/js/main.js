@@ -78,10 +78,10 @@ function showChecksList() {
 			$("#checks_list_table").append(`
 <div class="row">
 	<div class="col-sm-2">
-	  <input class="form-check-input" type="checkbox" id="check_run_`+check+`" checked>
+	  <input class="form-check-input" type="checkbox" id="check_run_`+check.name+`"`+(check.enabled?" checked":"")+`>
 	</div>
 	<div class="col-sm-10">
- 	 <label class="form-check-label" for="check_run_`+check+`">`+check+`</label>
+	 <label class="form-check-label" for="check_run_`+check.name+`">`+check.name+`</label>
 	</div>
 </div>`);
 		});

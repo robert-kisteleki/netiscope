@@ -53,7 +53,7 @@ func SetupFlags() {
 	flag.BoolVar(&flagForceIPv6, "force6", false, "Force IPv6 checks even if no usable local IPv6 addresses are found")
 	flag.StringVar(&flagLogLevel, "l", "", "Log level. Can be 'detail', 'info', 'warning' or 'error'")
 	flag.BoolVar(&flagVerbose, "v", false, "Be verbose reporting progress")
-	flag.StringVar(&flagRunCheck, "check", "", "Run only this check")
+	flag.StringVar(&flagRunCheck, "check", "", "Run only these checks (comma separated list)")
 	flag.BoolVar(&flagGui, "gui", false, "Start with a browser GUI")
 	flag.StringVar(&flagListen, "listen", "localhost:8080", "What host:port to listen on for the GUI")
 	flag.BoolVar(&flagVersion, "version", false, "Show version")
@@ -108,12 +108,17 @@ func ReadCIDRConfig() {
 	loadProviderCIDRBlocks()
 }
 
-// GetChecks loads the list of checks to be run from the ini file
+// GetChecks loads the list of all possible checks to be run from the ini file
+func GetAllChecks() []string {
+	return cfg.Section(flagSection).KeyStrings()
+}
+
+// GetChecks loads the list of checks to be run
 func GetChecks() []string {
 	if flagRunCheck != "" {
-		return []string{flagRunCheck}
+		return strings.Split(strings.ReplaceAll(flagRunCheck, " ", ""), ",")
 	}
-	return cfg.Section(flagSection).KeyStrings()
+	return GetAllChecks()
 }
 
 // GetConfigBoolParam returns the value of a boolean config option
