@@ -150,7 +150,7 @@ func initializeCheckByName(name string) (NetiscopeCheck, bool) {
 		check = &DNSOverHTTPSProvidersCheck{netiscopeCheckBase: data}
 	case "ssh_host_keys":
 		check = &SSHHostKeysCheck{netiscopeCheckBase: data}
-	case "path_mtu":
+	case "path_mtu_http":
 		check = &PathMTUHTTPCheck{netiscopeCheckBase: data}
 	default:
 		return nil, false
