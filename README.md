@@ -99,6 +99,11 @@ Both JSON and RFC8484 formats are supported.
 
 Test if a target SSH server presents a valid / known host key, in essence to detect the presence of interference / an on-path attacker. Multiple target servers can be configured in the `[ssh_host_keys]` section; each one is tested separately.
 
+### 8. Simple IPv6 path MTU check with HTTP
+
+Make simple HTTP queries against a few RIPE Atlas anchors. Try small vs. non-trivial requests (using short or long GET URLs), and small vs. non-trivial responses (by requesting this from the anchor). These tests could indicate PMTU problems. Detailed analysis on where these problems may be and the exact packet size where they are triggered is not part of this check.
+
+This test is only executed using IPv6 (if available).
 
 ### X. Future checks
 
@@ -113,7 +118,7 @@ The checks could also include:
     * verification of TLS certificates
     * sanity check of responses
     * whether protocols such as QUIC can be used
-  * (TODO, possible) IPv6 PMTUD to various targets
+  * (TODO, possible) More detailed IPv6 PMTUD to various targets
   * (TODO, possible) Check ability to spoof packets / BCP38 compliance
   * (TODO, possible) Measure upstream/downstream bandwidth
   * (TODO, possible) User defined check: favourite VPN, personal webserver, ... using ping/HTTPS/etc

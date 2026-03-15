@@ -78,6 +78,7 @@ var knownChecks []string = []string{
 	"port_filtering",
 	"doh_providers",
 	"ssh_host_keys",
+	"path_mtu",
 }
 
 var runningChecks []NetiscopeCheck
@@ -149,6 +150,8 @@ func initializeCheckByName(name string) (NetiscopeCheck, bool) {
 		check = &DNSOverHTTPSProvidersCheck{netiscopeCheckBase: data}
 	case "ssh_host_keys":
 		check = &SSHHostKeysCheck{netiscopeCheckBase: data}
+	case "path_mtu":
+		check = &PathMTUHTTPCheck{netiscopeCheckBase: data}
 	default:
 		return nil, false
 	}

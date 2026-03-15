@@ -212,6 +212,16 @@ func GetTargetsToSSHCheck() [][]string {
 	return splitConfigKeyList("ssh_host_keys", "server")
 }
 
+// GetTargetsToPathMTUCheck returns the list of targets to check for path MTU issues
+func GetTargetsToPathMTUHTTPCheck() []string {
+	return cfg.Section("path_mtu_http").Key("server").ValueWithShadows()
+}
+
+// GetPathMTUHTTPCheckTimeout returns the timeout for path MTU checks
+func GetPathMTUHTTPCheckTimeout() int {
+	return cfg.Section("path_mtu_http").Key("timeout").MustInt(3)
+}
+
 func Verbose() bool {
 	return flagVerbose
 }

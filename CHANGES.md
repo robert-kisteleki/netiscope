@@ -1,7 +1,7 @@
 ## CHANGES
 
 ### next
-  * ...
+  * NEW check: simple IPv6 Path MTU checks against RIPE Atlas anchors
 
 ### 0.7.20260311
   * NEW check: SSH host key checks
