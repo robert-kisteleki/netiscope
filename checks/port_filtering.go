@@ -34,7 +34,7 @@ func (check *PortFilteringCheck) start() {
 				conn, err := net.DialTimeout(
 					strings.ToLower(target[2])+af, // {ud,tcp}{4,6}
 					target[0]+":"+target[1],       // host:port
-					time.Duration(util.GetPortFilteringTimeout())*time.Second,
+					time.Duration(util.GetPortFilteringTimeout())*time.Millisecond,
 				)
 				if err != nil {
 					check.log(

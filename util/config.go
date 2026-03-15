@@ -199,7 +199,7 @@ func CheckPortFilteringResponse() bool {
 
 // GetPortFilteringTimeout specifies the network timeout (seconds) for port filtering checks
 func GetPortFilteringTimeout() int {
-	return cfg.Section("port_filtering").Key("timeout").MustInt(3)
+	return cfg.Section("port_filtering").Key("timeout").MustInt(3000)
 }
 
 // GetDoHProviders returns the list of DoH providers listed in the config file
@@ -219,7 +219,7 @@ func GetTargetsToPathMTUHTTPCheck() []string {
 
 // GetPathMTUHTTPCheckTimeout returns the timeout for path MTU checks
 func GetPathMTUHTTPCheckTimeout() int {
-	return cfg.Section("path_mtu_http").Key("timeout").MustInt(3)
+	return cfg.Section("path_mtu_http").Key("timeout").MustInt(3000)
 }
 
 func Verbose() bool {
