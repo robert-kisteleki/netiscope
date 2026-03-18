@@ -231,12 +231,8 @@ func Verbose() bool {
 	return flagVerbose
 }
 
-func StartGui() bool {
+func GuiRequested() bool {
 	return flagGui || cfg.Section("main").Key("gui").MustBool(false)
-}
-
-func VersionFlag() bool {
-	return flagVersion
 }
 
 // check which file exists, from a list of candidates in order of preference
@@ -278,4 +274,12 @@ func UseJSONFormat() bool {
 
 func GetListenHostPort() string {
 	return flagListen
+}
+
+func LoadRootDNSServerData() [][]string {
+	return splitConfigKeyList("dns_root_servers", "server")
+}
+
+func VersionRequested() bool {
+	return flagVersion
 }

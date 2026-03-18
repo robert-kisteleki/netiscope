@@ -13,6 +13,7 @@ func init() {
 }
 
 type NetiscopeCheck interface {
+	configure()
 	start()
 	stop()
 	log(level LogLevelType, mnemonic string, details string)
@@ -24,6 +25,14 @@ type netiscopeCheckBase struct {
 	name     string
 	stopping bool
 	running  bool
+}
+
+func (check *netiscopeCheckBase) configure() {
+	check.log(
+		LogLevelDetail,
+		check.getNameAsMnemonic()+"_CONFIGURE",
+		"Configuring check",
+	)
 }
 
 func (check *netiscopeCheckBase) start() {
@@ -96,6 +105,7 @@ func ExecuteChecks(checksToDo []string) {
 		checkName := checksToDo[i]
 		check, found := initializeCheckByName(checkName)
 		if found {
+			check.configure()
 			wg.Add(1)
 			runningChecks = append(runningChecks, check)
 

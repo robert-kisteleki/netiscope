@@ -17,7 +17,7 @@ import (
 func main() {
 	util.SetupFlags()
 
-	if util.VersionFlag() {
+	if util.VersionRequested() {
 		fmt.Println(util.Version + " (" + runtime.Version() + ")")
 		return
 	}
@@ -26,7 +26,7 @@ func main() {
 	util.ReadCIDRConfig()
 	checks.SetLogLevel(util.GetLogLevel(), util.Verbose())
 
-	if util.StartGui() {
+	if util.GuiRequested() {
 		runGui()
 	} else {
 		go startChecks(util.GetChecks(), true)

@@ -2,6 +2,8 @@
 
 ### next
   * NEW check: simple IPv6 Path MTU checks against RIPE Atlas anchors
+  * CHANGED: move root DNS server config to the ini file
+  * CHANGED: support "ping is expected to fail" per root server and AF
 
 ### 0.7.20260311
   * NEW check: SSH host key checks
