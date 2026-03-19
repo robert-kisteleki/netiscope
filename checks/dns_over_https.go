@@ -99,7 +99,7 @@ func (check *DNSOverHTTPSProvidersCheck) start() {
 
 				// verify if answers are in predefined known CIDR ranges
 				for _, ip := range addrs {
-					CheckIPForProvider(&check.netiscopeCheckBase, fmt.Sprint(ip), name)
+					CheckIPForNetwork(&check.netiscopeCheckBase, fmt.Sprint(ip), name, true, fmt.Sprintf(" (via resolver: %s)", pbase))
 				}
 			}
 		}

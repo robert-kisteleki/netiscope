@@ -110,7 +110,7 @@ func queryNameFromResolver(
 
 	// verify if answers are in predefined known CIDR ranges
 	for _, ip := range answers {
-		CheckIPForProvider(check, fmt.Sprint(ip), name)
+		CheckIPForNetwork(check, fmt.Sprint(ip), name, true, fmt.Sprintf(" (via resolver: %s)", resolver))
 	}
 
 	return ResultSuccess

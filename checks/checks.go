@@ -186,31 +186,56 @@ func Stop() {
 	}
 }
 
-// CheckIPForProvider makes log entries about an IP being in a provider's CIDR list
-func CheckIPForProvider(
+// CheckIPForNetwork makes log entries about an IP being in a network's CIDR list
+func CheckIPForNetwork(
 	check *netiscopeCheckBase,
 	ip string,
-	provider string,
+	network string,
+	checkCDN bool,
+	logExtra string,
 ) {
-	known, contains := util.IsIPInProviderCIDRBlock(ip, provider)
+	contains, err := util.IsIPInNetworkCIDRBlock(ip, network)
 	switch {
-	case !known:
+	case err != nil:
+		check.log(
+			LogLevelError,
+			"NETWORK_CIDR_CONFIG_ERROR",
+			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", network, ip),
+		)
+	case contains:
 		check.log(
 			LogLevelInfo,
-			"PROVIDER_CIDR_UNKNOWN",
-			fmt.Sprintf("CIDR block list is unknown for %s (IP: %v)", provider, ip),
+			"NETWORK_CIDR_OK",
+			fmt.Sprintf("The IP %s is in the CIDR block list for %s%s", ip, network, logExtra),
 		)
-	case known && contains:
+	case !contains && !checkCDN:
 		check.log(
-			LogLevelInfo,
-			"PROVIDER_CIDR_OK",
-			fmt.Sprintf("The IP %s is in the CIDR block list for %s", ip, provider),
+			LogLevelError,
+			"NETWORK_CIDR_NOT_OK",
+			fmt.Sprintf("The IP %s is not in the CIDR block list for %s%s", ip, network, logExtra),
 		)
-	case known && !contains:
-		check.log(
-			LogLevelWarning,
-			"PROVIDER_CIDR_NOT_OK",
-			fmt.Sprintf("The IP %s is not in the CIDR block list for %s", ip, provider),
-		)
+	case !contains && checkCDN:
+		// second try: check if it's hosted on a known CDN
+		cdn, err := util.IsIpInCDNCIDRBlock(ip)
+		switch {
+		case err != nil:
+			check.log(
+				LogLevelError,
+				"NETWORK_CIDR_UNKNOWN_CDN",
+				err.Error(),
+			)
+		case cdn == "":
+			check.log(
+				LogLevelError,
+				"NETWORK_CIDR_NOT_OK",
+				fmt.Sprintf("The IP %s is not in the CIDR block list for %s%s", ip, network, logExtra),
+			)
+		default:
+			check.log(
+				LogLevelWarning,
+				"NETWORK_CIDR_IN_CDN",
+				fmt.Sprintf("The IP %s is in not in the the CIDR block list for %s but it is in the CDN %s%s", ip, network, cdn, logExtra),
+			)
+		}
 	}
 }

@@ -283,3 +283,7 @@ func LoadRootDNSServerData() [][]string {
 func VersionRequested() bool {
 	return flagVersion
 }
+
+func GetCDNList() []string {
+	return cfg.Section("cdns").Key("cdn").ValueWithShadows()
+}

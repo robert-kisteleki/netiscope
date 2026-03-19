@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"math/big"
 	"net"
 	"strings"
@@ -84,18 +85,30 @@ func IsIPv4DCHP(ip string) bool {
 }
 
 // IsIPInProviderCIDRBlock checks if a provider's CIDR blocks contain a particular IP
-// @return
-// is-provider-cidr-list-known?
-// is-ip-in-provider-cidr-list?
-func IsIPInProviderCIDRBlock(ip string, provider string) (bool, bool) {
+func IsIPInNetworkCIDRBlock(ip string, provider string) (bool, error) {
 	cidrs, ok := cidrProviders[provider]
 	if !ok {
-		return false, false
+		return false, fmt.Errorf("CIDR block list is unknown for %s (IP: %v)", provider, ip)
 	}
 	if IsIPv6NAT64(ip) {
 		// NAT64, unwrap the IPv4 address
 		b := big.NewInt(0).SetBytes(net.ParseIP(ip)).Bytes()
 		ip = net.IPv4(b[11], b[12], b[13], b[14]).String()
 	}
-	return true, IsInCIDRList(ip, cidrs)
+	return IsInCIDRList(ip, cidrs), nil
+}
+
+// IsIpInCDNProviderCIDRBlock checks if an IP is in the CIDR blocks of any of the CDN providers
+// @return which CDN it is or "" if none, or error
+func IsIpInCDNCIDRBlock(ip string) (string, error) {
+	for _, cdn := range GetCDNList() {
+		contains, err := IsIPInNetworkCIDRBlock(ip, cdn)
+		if err != nil {
+			return "", fmt.Errorf("CIDR block list is unknown for %s (IP: %v)", cdn, ip)
+		}
+		if contains {
+			return cdn, nil
+		}
+	}
+	return "", nil
 }
