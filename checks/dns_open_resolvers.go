@@ -3,75 +3,53 @@ package checks
 import (
 	"fmt"
 	"netiscope/util"
+	"strings"
 )
 
-type DNSGoogleOpenResolverCheck struct {
-	netiscopeCheckBase
-}
-type DNSCloudflareOpenResolverCheck struct {
-	netiscopeCheckBase
-}
-type DNSQuad9OpenResolverCheck struct {
+type DNSOpenResolverCheck struct {
 	netiscopeCheckBase
 }
 
-// CheckGoogleDNS checks Google's open resolver
-func (check *DNSGoogleOpenResolverCheck) start() {
+// check an open resolver
+func (check *DNSOpenResolverCheck) start() {
 	check.netiscopeCheckBase.start()
 
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Google",
-		"IPv4",
-		[]string{"8.8.8.8", "8.8.4.4"},
-	)
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Google",
-		"IPv6",
-		[]string{"2001:4860:4860::8888", "2001:4860:4860::8844"},
-	)
+	providers := util.GetOpenResolverList()
+	for _, provider := range providers {
+		parts := strings.Split(strings.ReplaceAll(provider, " ", ""), ",")
+		if len(parts) < 2 {
+			check.log(
+				LogLevelError,
+				"INVALID_OPEN_DNS_RESOLVER",
+				fmt.Sprintf("Invalid open DNS resolver format for provider %s", provider),
+			)
+			continue
+		}
 
-	check.netiscopeCheckBase.finish()
-}
+		v4list := []string{}
+		v6list := []string{}
+		for _, part := range parts[1:] {
+			if strings.Contains(part, ":") {
+				v6list = append(v6list, part)
+			} else {
+				v4list = append(v4list, part)
+			}
+		}
 
-// CheckCloudflareDNS checks Cloudflare's open resolver
-func (check *DNSCloudflareOpenResolverCheck) start() {
-	check.netiscopeCheckBase.start()
-
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Cloudflare",
-		"IPv4",
-		[]string{"1.1.1.1", "1.0.0.1"},
-	)
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Cloudflare",
-		"IPv6",
-		[]string{"2606:4700:4700::1111", "2606:4700:4700::1001"},
-	)
-
-	check.netiscopeCheckBase.finish()
-}
-
-// CheckQuad9DNS checks Quad9's open resolver
-func (check *DNSQuad9OpenResolverCheck) start() {
-	check.netiscopeCheckBase.start()
-
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Quad9",
-		"IPv4",
-		[]string{"9.9.9.9", "149.112.112.112"},
-	)
-	checkOpenResolver(
-		&check.netiscopeCheckBase,
-		"Quad9",
-		"IPv6",
-		[]string{"2620:fe::fe", "2620:fe::9"},
-	)
-
+		if len(v4list) > 0 {
+			checkOpenResolver(&check.netiscopeCheckBase, parts[0], "IPv4", v4list)
+		}
+		if len(v6list) > 0 {
+			checkOpenResolver(&check.netiscopeCheckBase, parts[0], "IPv6", v6list)
+		}
+		if len(v4list) == 0 && len(v6list) == 0 {
+			check.log(
+				LogLevelError,
+				"INVALID_OPEN_DNS_RESOLVER",
+				fmt.Sprintf("No IP addresses defined for open resolver %s", parts[0]),
+			)
+		}
+	}
 	check.netiscopeCheckBase.finish()
 }
 
@@ -84,12 +62,20 @@ func checkOpenResolver(
 	if (af == "IPv4" && !util.SkipIPv4()) || (af == "IPv6" && !util.SkipIPv6()) {
 		check.log(
 			LogLevelInfo,
-			"CKECKING_OPEN_DNS_RESOLVER",
+			"CKECK_OPEN_DNS_RESOLVER_START",
 			fmt.Sprintf(
 				"Checking %s's %s resolvers %v",
 				provider, af, resolvers,
 			),
 		)
 		testResolversOnAddressFamily(check, "OPEN_DNS_RESOLVER", af, "open DNS resolvers", resolvers)
+		check.log(
+			LogLevelInfo,
+			"CKECK_OPEN_DNS_RESOLVER_DONE",
+			fmt.Sprintf(
+				"Finished checking %s's %s resolvers",
+				provider, af,
+			),
+		)
 	}
 }

@@ -80,9 +80,7 @@ func (check *netiscopeCheckBase) getNameAsMnemonic() string {
 var knownChecks []string = []string{
 	"network_interfaces",
 	"dns_local_resolvers",
-	"dns_open_resolver_1111",
-	"dns_open_resolver_8888",
-	"dns_open_resolver_9999",
+	"dns_open_resolvers",
 	"dns_root_servers",
 	"port_filtering",
 	"doh_providers",
@@ -146,12 +144,8 @@ func initializeCheckByName(name string) (NetiscopeCheck, bool) {
 		check = &NetworkInterfacesCheck{netiscopeCheckBase: data}
 	case "dns_local_resolvers":
 		check = &DNSLocalResolversCheck{netiscopeCheckBase: data}
-	case "dns_open_resolver_1111":
-		check = &DNSCloudflareOpenResolverCheck{netiscopeCheckBase: data}
-	case "dns_open_resolver_8888":
-		check = &DNSGoogleOpenResolverCheck{netiscopeCheckBase: data}
-	case "dns_open_resolver_9999":
-		check = &DNSQuad9OpenResolverCheck{netiscopeCheckBase: data}
+	case "dns_open_resolvers":
+		check = &DNSOpenResolverCheck{netiscopeCheckBase: data}
 	case "dns_root_servers":
 		check = &DNSRootServersCheck{netiscopeCheckBase: data}
 	case "port_filtering":

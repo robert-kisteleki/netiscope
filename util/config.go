@@ -154,6 +154,11 @@ func GetDNSNamesToLookup() []string {
 	return cfg.Section("dns").Key("name").ValueWithShadows()
 }
 
+// GetOpenResolverList returns the list of open resolvers to check
+func GetOpenResolverList() []string {
+	return cfg.Section("dns_open_resolvers").Key("provider").ValueWithShadows()
+}
+
 // GetTLDsToLookup returns the list of TLDs to look up with root DNS servers
 func GetTLDsToLookup() []string {
 	return cfg.Section("dns").Key("tld").ValueWithShadows()
