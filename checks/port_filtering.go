@@ -59,7 +59,7 @@ func (check *PortFilteringCheck) start() {
 
 				// write & read
 				conn.SetDeadline(time.Now().Add(time.Duration(util.GetPortFilteringTimeout()) * time.Second))
-				fmt.Fprintf(conn, "Netiscope v%s\n", util.Version)
+				fmt.Fprintf(conn, "Netiscope v%s\n", version)
 				reply, err := bufio.NewReader(conn).ReadString('\n')
 				if err != nil {
 					check.log(

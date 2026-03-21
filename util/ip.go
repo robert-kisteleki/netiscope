@@ -25,7 +25,7 @@ var (
 	cidrIPv6NAT64 = []net.IPNet{makeIPNet("64:ff9b::/96")}
 )
 
-// CIDR ranges for predefined providers. Contents are loaded fro the config file
+// CIDR ranges for predefined providers. Contents are loaded from the config file
 var cidrProviders = make(map[string][]net.IPNet)
 
 func makeIPNet(cidr string) net.IPNet {

@@ -89,6 +89,7 @@ var knownChecks []string = []string{
 }
 
 var runningChecks []NetiscopeCheck
+var version string
 
 // ExecuteChecks runs all the defined checks
 func ExecuteChecks(checksToDo []string) {
@@ -162,8 +163,9 @@ func initializeCheckByName(name string) (NetiscopeCheck, bool) {
 	return check, true
 }
 
-func Start() {
-	AdminCheck.log(LogLevelAdmin, "START", fmt.Sprintf("Started (version %s, %s)", util.Version, runtime.Version()))
+func Start(ver string) {
+	version = ver
+	AdminCheck.log(LogLevelAdmin, "START", fmt.Sprintf("Started (version %s, %s)", version, runtime.Version()))
 }
 
 func Finish(closeChannel bool) {

@@ -18,7 +18,7 @@ func main() {
 	util.SetupFlags()
 
 	if util.VersionRequested() {
-		fmt.Println(util.Version + " (" + runtime.Version() + ")")
+		fmt.Println(version + " (" + runtime.Version() + ")")
 		return
 	}
 
@@ -35,7 +35,7 @@ func main() {
 }
 
 func startChecks(checksToDo []string, close bool) {
-	checks.Start()
+	checks.Start(version)
 	if util.SkipIPv4() {
 		checks.AdminCheck.Log(checks.LogLevelAdmin, "SKIP_IPV4", "IPv4 checks are disabled")
 	}
