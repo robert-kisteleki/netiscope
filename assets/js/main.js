@@ -63,6 +63,7 @@ $.when( $.ready ).then(function() {
 	$("#startbutton").on("click", startChecks);
 	$("#stopbutton").on("click", stopChecks);
 	$("#downloadbutton").on("click", downloadResultsAsJSONL);
+	$("#check_runall").on("change", runAllChanged );
 });
 
 // show the list of available checks together with checkboxes
@@ -84,8 +85,30 @@ function showChecksList() {
 	 <label class="form-check-label" for="check_run_`+check.name+`">`+check.name+`</label>
 	</div>
 </div>`);
+			$("#check_run_"+check.name).on("change", function() {
+				updateSelectAllChecks()
+			});
 		});
+		updateSelectAllChecks()
 	}
+}
+
+function runAllChanged() {
+	checked = $("#check_runall").is(":checked");
+	$("input[type='checkbox']").filter(':checkbox[id^="check_run_"]').each(function() {
+		$(this).prop("checked", checked);
+	});
+}
+
+function updateSelectAllChecks() {
+	allchecked = true
+	nonechecked = true
+	$("input[type='checkbox']").filter(':checkbox[id^="check_run_"]').each(function() {
+		allchecked &= $(this).is(":checked");
+		nonechecked &= !$(this).is(":checked");
+	});
+	$("#check_runall").prop('indeterminate', allchecked || nonechecked ? false : true);
+	$("#check_runall").prop("checked", allchecked);
 }
 
 function stopChecks() {
