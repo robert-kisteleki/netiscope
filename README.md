@@ -69,11 +69,11 @@ Like with the local DNS resolvers, each one is pinged and a series of DNS lookup
 
 ### 4. Root DNS servers
 
-Test all root name servers (A..M) on IPV4 and IPv6 if possible:
-  * ping (note: G-root doesn't answer pings)
+Test all root name servers (A..M) on IPv4 and IPv6 if possible:
+  * ping (note: G-root doesn't answer pings on IPv4)
   * query for "SOA ." and check basic sanity of the answer
   * query for a set of known TLDs and list their defined nameservers
-  * query for randomly generaed TLD names and expect that to fail
+  * query for randomly generated TLD names and expect that to fail
 
 ### 5. Port filtering
 
