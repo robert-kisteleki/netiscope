@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"netiscope/util"
+	"slices"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -12,57 +13,71 @@ import (
 
 type SSHHostKeysCheck struct {
 	netiscopeCheckBase
-	currentSSHPubkeyHashExpectation string
-	currentSSHPubkeyHashReality     string
-	checkName                       string
+	targets        []string
+	keys           map[string][]string
+	currentTarget  string
+	offeredKey     string
+	OfferedKeyHash string
+	matckedKey     string
 }
 
-// CheckSshHostKeys checks if outgoing SSH connections get the correct host keys or not
-func (check *SSHHostKeysCheck) start() {
-	check.netiscopeCheckBase.start()
+func (check *SSHHostKeysCheck) configure() {
+	check.targets = make([]string, 0)
+	check.keys = make(map[string][]string, 0)
 
-	targets := util.GetTargetsToSSHCheck()
-	for _, target := range targets {
-		if check.stopping {
-			return
-		}
-
+	servers := util.GetTargetsToSSHCheck()
+	for _, target := range servers {
 		if len(target) != 2 {
 			check.log(LogLevelError, "SSH_KEY_CONFIG_ERROR", "Wrong SSH host key check configuration: "+strings.Join(target, ","))
 			continue
 		}
+		if !slices.Contains(check.targets, target[0]) {
+			check.targets = append(check.targets, target[0])
+		}
+		check.keys[target[0]] = append(check.keys[target[0]], target[1])
+		check.log(
+			LogLevelDetail,
+			"SSH_KEY_CONFIG_LOADED",
+			fmt.Sprintf("Loaded SSH key for target %s: %s", target[0], target[1]),
+		)
+	}
+}
 
-		host := target[0]
-		expectedKey := strings.Split(target[1], " ")[1]
+// SSHHostKeysCheck checks if outgoing SSH connections get the correct host keys or not
+func (check *SSHHostKeysCheck) start() {
+	check.netiscopeCheckBase.start()
+
+	for _, target := range check.targets {
+		if check.stopping {
+			return
+		}
+
+		host := strings.Split(target, ",")[0]
+		check.currentTarget = host
+		check.matckedKey = ""
 
 		check.log(LogLevelDetail, "SSH_KEY_HOST_TO_CHECK", "SSH host key check for host "+host)
-
-		keyBytes, err := base64.StdEncoding.DecodeString(expectedKey)
-		if err != nil {
-			check.log(LogLevelError, "SSH_KEY_FORMAT_ERROR1", "Wrong SSH host key format for "+host)
-			continue
-		}
-		hostKey, err := ssh.ParsePublicKey(keyBytes)
-		if err != nil {
-			check.log(LogLevelError, "SSH_KEY_FORMAT_ERROR2", "Wrong SSH host key format for "+host)
-			continue
-		}
-		check.currentSSHPubkeyHashExpectation = hostKey.Type() + " " + ssh.FingerprintSHA256(hostKey)
 
 		sshConfig := &ssh.ClientConfig{
 			HostKeyCallback: check.hostKeyCheckCallback,
 		}
-		_, err = ssh.Dial("tcp", host, sshConfig)
-		if check.currentSSHPubkeyHashExpectation != check.currentSSHPubkeyHashReality {
+		_, err := ssh.Dial("tcp", host, sshConfig)
+		switch {
+		case check.matckedKey == "":
 			check.log(LogLevelError, "SSH_KEY_CHECK_FAIL",
-				fmt.Sprintf("SSH host key mismatch for %s: expected %s, got %s",
+				fmt.Sprintf("SSH host key mismatch for %s: got %s (%s). Error is %v.",
 					host,
-					check.currentSSHPubkeyHashExpectation,
-					check.currentSSHPubkeyHashReality,
+					check.offeredKey,
+					check.OfferedKeyHash,
+					err,
 				),
 			)
-		} else {
-			check.log(LogLevelInfo, "SSH_KEY_CHECK_SUCCESS", fmt.Sprintf("SSH host key match for %s", host))
+		case check.matckedKey != "":
+			check.log(
+				LogLevelInfo,
+				"SSH_KEY_CHECK_SUCCESS",
+				fmt.Sprintf("SSH host key match for %s: %s (%s)", host, check.matckedKey, check.OfferedKeyHash),
+			)
 		}
 	}
 
@@ -70,10 +85,14 @@ func (check *SSHHostKeysCheck) start() {
 }
 
 func (check *SSHHostKeysCheck) hostKeyCheckCallback(hostname string, remote net.Addr, key ssh.PublicKey) error {
-	check.currentSSHPubkeyHashReality = key.Type() + " " + ssh.FingerprintSHA256(key)
-	if check.currentSSHPubkeyHashExpectation != check.currentSSHPubkeyHashReality {
-		return fmt.Errorf("SSH host key mismatch")
-	} else {
-		return nil
+	check.offeredKey = key.Type() + " " + base64.StdEncoding.EncodeToString(key.Marshal())
+	check.OfferedKeyHash = key.Type() + " " + ssh.FingerprintSHA256(key)
+	check.log(LogLevelDetail, "SSH_KEY_HOST_OFFERED", "SSH host key offered: "+check.offeredKey)
+	for _, keyTry := range check.keys[check.currentTarget] {
+		if check.offeredKey == keyTry {
+			check.matckedKey = keyTry
+			return nil
+		}
 	}
+	return fmt.Errorf("SSH host key mismatch")
 }

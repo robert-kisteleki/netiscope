@@ -6,6 +6,7 @@
   * CHANGED: support "ping is expected to fail" per root server and AF
   * CHANGED: all defined open DNS resolvers are now in one check
   * NEW: added "select all checks" to GUI
+	* CHANGED: SSH hos key checks can now have multiple keys per host, any mathces are accepted
 
 ### 0.7.20260311
   * NEW check: SSH host key checks
