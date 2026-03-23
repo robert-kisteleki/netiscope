@@ -62,8 +62,8 @@ func (check *DNSRootServersCheck) configure() {
 			Letter:    item[0],
 			IPv4:      item[1],
 			IPv6:      item[2],
-			Pingable4: len(item) == 5 && item[3] == "true",
-			Pingable6: len(item) == 5 && item[4] == "true",
+			Pingable4: len(item) < 5 || item[3] == "true",
+			Pingable6: len(item) < 5 || item[4] == "true",
 		}
 		rootDNSServers = append(rootDNSServers, root)
 	}
