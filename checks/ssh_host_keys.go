@@ -60,6 +60,7 @@ func (check *SSHHostKeysCheck) start() {
 
 		sshConfig := &ssh.ClientConfig{
 			HostKeyCallback: check.hostKeyCheckCallback,
+			User:            "netiscope",
 		}
 		_, err := ssh.Dial("tcp", host, sshConfig)
 		switch {
