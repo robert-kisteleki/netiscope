@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 )
 
 // CheckNetworkInterfaces evaulates the available network interfaces

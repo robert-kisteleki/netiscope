@@ -2,7 +2,7 @@ package checks
 
 import (
 	"fmt"
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 	"strings"
 )
 

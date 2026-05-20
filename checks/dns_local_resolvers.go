@@ -3,7 +3,7 @@ package checks
 import (
 	"bufio"
 	"fmt"
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 	"os"
 	"strings"
 	"time"

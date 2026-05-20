@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 	"slices"
 	"strings"
 

@@ -1,4 +1,4 @@
-module netiscope
+module github.com/robert-kisteleki/netiscope
 
 go 1.25.0
 

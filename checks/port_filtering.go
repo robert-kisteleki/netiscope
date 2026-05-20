@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 	"strings"
 	"time"
 )
