@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 )
 
 // CheckDNSOverHTTPSProviders checks responsiveness of several DoH providers

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 )
 
 // query the predefined list of names from a set of resolvers

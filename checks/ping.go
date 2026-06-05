@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 
 	probing "github.com/prometheus-community/pro-bing"
 )

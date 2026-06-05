@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"netiscope/checks"
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/checks"
+	"github.com/robert-kisteleki/netiscope/util"
 	"runtime"
 	"slices"
 

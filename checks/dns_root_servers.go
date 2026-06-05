@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"netiscope/util"
+	"github.com/robert-kisteleki/netiscope/util"
 )
 
 // CheckDNSRootServers checks all DNS root servers
