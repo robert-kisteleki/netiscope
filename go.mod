@@ -1,13 +1,13 @@
 module github.com/robert-kisteleki/netiscope
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/go-ini/ini v1.67.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/miekg/dns v1.1.73
 	github.com/prometheus-community/pro-bing v0.9.1
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 )
 
 require (
